@@ -7,7 +7,7 @@ load_dotenv()
 BINANCE_CONFIG = {
     'api_key': os.getenv('BINANCE_API_KEY'),
     'api_secret': os.getenv('BINANCE_SECRET_KEY'),
-    'testnet': True  # Start with testnet
+    'testnet': True
 }
 
 # Reddit Configuration
@@ -17,8 +17,15 @@ REDDIT_CONFIG = {
     'user_agent': os.getenv('REDDIT_USER_AGENT')
 }
 
+# Asset Configuration
+SYMBOLS = ['BTCUSDT', 'ETHUSDT', 'ADAUSDT', 'DOTUSDT', 'LINKUSDT']  # Current crypto symbols
+
+# For future stock integration, you could add:
+STOCK_SYMBOLS = ['AAPL', 'TSLA', 'MSFT', 'AMZN', 'GOOGL', 'NVDA']
+
+# Social media sources for sentiment
+SUBREDDITS = ['stocks', 'investing', 'wallstreetbets', 'CryptoCurrency', 'binance', 'CryptoMarkets']
+
 # App Configuration
-SYMBOLS = ['BTCUSDT', 'ETHUSDT', 'ADAUSDT', 'DOTUSDT', 'LINKUSDT']
-SUBREDDITS = ['CryptoCurrency', 'binance', 'CryptoMarkets']
 UPDATE_INTERVAL = 60  # seconds
-SENTIMENT_THRESHOLD = 0.1  # Minimum sentiment score to consider
+SENTIMENT_THRESHOLD = 0.1

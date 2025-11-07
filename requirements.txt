@@ -22,3 +22,5 @@ schedule>=1.2.0
 
 # WebSocket for real-time data
 websocket-client>=1.6.3
+
+ta-lib==0.4.26
