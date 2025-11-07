@@ -24,3 +24,6 @@ schedule>=1.2.0
 websocket-client>=1.6.3
 
 ta-lib==0.4.26
+
+yfinance>=0.2.18
+newsapi-python>=0.1.6

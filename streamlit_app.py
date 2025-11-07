@@ -24,7 +24,7 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# Professional CSS that works with Streamlit's defaults
+# Enhanced Professional CSS with complete Streamlit component styling
 st.markdown("""
 <style>
     /* Main theme colors */
@@ -37,12 +37,129 @@ st.markdown("""
         --text-primary: #f8fafc;
         --text-secondary: #94a3b8;
         --border: #334155;
+        --sidebar-bg: #0f172a;
+        --header-bg: #1e293b;
     }
     
     /* Main app background */
     .stApp {
         background: linear-gradient(135deg, var(--dark-bg) 0%, #1e293b 100%);
         color: var(--text-primary);
+    }
+    
+    /* HEADER STYLING - Fix white header */
+    header[data-testid="stHeader"] {
+        background: var(--header-bg) !important;
+        border-bottom: 1px solid var(--border) !important;
+    }
+    
+    /* SIDEBAR STYLING - Complete overhaul */
+    section[data-testid="stSidebar"] {
+        background: linear-gradient(180deg, var(--sidebar-bg) 0%, #1e293b 100%) !important;
+    }
+    
+    section[data-testid="stSidebar"] > div {
+        background: transparent !important;
+    }
+    
+    /* Sidebar text and elements */
+    section[data-testid="stSidebar"] * {
+        color: var(--text-primary) !important;
+    }
+    
+    /* Sidebar headers */
+    section[data-testid="stSidebar"] h1,
+    section[data-testid="stSidebar"] h2,
+    section[data-testid="stSidebar"] h3,
+    section[data-testid="stSidebar"] h4,
+    section[data-testid="stSidebar"] h5,
+    section[data-testid="stSidebar"] h6 {
+        color: var(--secondary) !important;
+    }
+    
+    /* ===== DROPDOWN FIXES ===== */
+    
+    /* Main dropdown container */
+    section[data-testid="stSidebar"] [data-baseweb="select"] > div {
+        background-color: var(--card-bg) !important;
+        border: 1px solid var(--border) !important;
+        border-radius: 8px !important;
+    }
+    
+    /* Dropdown value text */
+    section[data-testid="stSidebar"] [data-baseweb="select"] > div > div {
+        color: var(--text-primary) !important;
+    }
+    
+    /* Dropdown arrow */
+    section[data-testid="stSidebar"] [data-baseweb="select"] svg {
+        fill: var(--text-primary) !important;
+    }
+    
+    /* Dropdown popover (the actual dropdown menu) */
+    section[data-testid="stSidebar"] [data-baseweb="popover"] {
+        background-color: var(--card-bg) !important;
+        border: 1px solid var(--border) !important;
+        border-radius: 8px !important;
+    }
+    
+    /* Dropdown menu */
+    section[data-testid="stSidebar"] [data-baseweb="menu"] {
+        background-color: var(--card-bg) !important;
+        border-radius: 8px !important;
+    }
+    
+    /* Dropdown list items */
+    section[data-testid="stSidebar"] [data-baseweb="menu"] li {
+        background-color: var(--card-bg) !important;
+        color: var(--text-primary) !important;
+        padding: 10px 16px !important;
+    }
+    
+    /* Dropdown list items hover */
+    section[data-testid="stSidebar"] [data-baseweb="menu"] li:hover {
+        background-color: var(--secondary) !important;
+        color: white !important;
+    }
+    
+    /* Selected item in dropdown */
+    section[data-testid="stSidebar"] [data-baseweb="menu"] li[aria-selected="true"] {
+        background-color: var(--primary) !important;
+        color: white !important;
+    }
+    
+    /* Dropdown input (search in dropdown) */
+    section[data-testid="stSidebar"] [data-baseweb="input"] input {
+        background-color: var(--card-bg) !important;
+        color: var(--text-primary) !important;
+        border: 1px solid var(--border) !important;
+    }
+    
+    /* Checkbox styling */
+    section[data-testid="stSidebar"] .stCheckbox > label {
+        color: var(--text-primary) !important;
+    }
+    
+    section[data-testid="stSidebar"] [data-baseweb="checkbox"] > div {
+        background-color: var(--card-bg) !important;
+        border-color: var(--border) !important;
+    }
+    
+    /* Button styling in sidebar */
+    section[data-testid="stSidebar"] .stButton > button {
+        background: linear-gradient(135deg, var(--secondary) 0%, var(--primary) 100%);
+        color: white;
+        border: none;
+        border-radius: 8px;
+        padding: 0.75rem 1.5rem;
+        font-weight: 600;
+        width: 100%;
+    }
+    
+    /* Main content area */
+    .main .block-container {
+        background: transparent !important;
+        color: var(--text-primary) !important;
     }
     
     /* Header styling */
@@ -127,12 +244,7 @@ st.markdown("""
         background: linear-gradient(90deg, rgba(239, 68, 68, 0.1) 0%, transparent 100%);
     }
     
-    /* Sidebar styling */
-    .sidebar .sidebar-content {
-        background: linear-gradient(180deg, var(--dark-bg) 0%, #1e293b 100%);
-        border-right: 1px solid var(--border);
-    }
-    
+    /* Sidebar title */
     .sidebar-title {
         color: var(--secondary);
         text-align: center;
@@ -158,24 +270,6 @@ st.markdown("""
         box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);
     }
     
-    /* Metric containers */
-    [data-testid="metric-container"] {
-        background: var(--card-bg) !important;
-        border: 1px solid var(--border) !important;
-        border-radius: 12px !important;
-        padding: 1.5rem !important;
-    }
-    
-    [data-testid="metric-container"] label {
-        color: var(--text-secondary) !important;
-        font-weight: 500 !important;
-    }
-    
-    [data-testid="metric-container"] value {
-        color: var(--accent) !important;
-        font-weight: 700 !important;
-    }
-    
     /* Alert boxes */
     .stAlert {
         background: var(--card-bg) !important;
@@ -184,13 +278,11 @@ st.markdown("""
         color: var(--text-primary) !important;
     }
     
-    /* Text elements */
-    p, div, span {
+    /* Global fixes for any remaining white elements */
+    .stSelectbox:not(section[data-testid="stSidebar"] .stSelectbox) > div > div {
+        background: var(--card-bg) !important;
         color: var(--text-primary) !important;
-    }
-    
-    h1, h2, h3, h4, h5, h6 {
-        color: var(--secondary) !important;
+        border: 1px solid var(--border) !important;
     }
     
     /* Custom scrollbar */
@@ -209,16 +301,6 @@ st.markdown("""
     
     ::-webkit-scrollbar-thumb:hover {
         background: var(--text-secondary);
-    }
-    
-    /* Loading spinner */
-    .stSpinner > div {
-        border-color: var(--secondary) transparent transparent transparent !important;
-    }
-    
-    /* Progress bar */
-    .stProgress > div > div > div {
-        background: linear-gradient(90deg, var(--secondary) 0%, var(--accent) 100%);
     }
 </style>
 """, unsafe_allow_html=True)
@@ -289,18 +371,69 @@ def load_price_data(symbol):
         st.error(f"Error loading data for {symbol}: {e}")
         return pd.DataFrame()
 
+
 def load_sentiment_data():
-    """Load sentiment data"""
+    """Load combined sentiment data from both Reddit and News"""
     try:
-        filename = "data/raw/sentiment.csv"
-        if os.path.exists(filename):
-            df = pd.read_csv(filename)
-            if 'timestamp' in df.columns:
-                df['timestamp'] = pd.to_datetime(df['timestamp'])
-            return df
-        return pd.DataFrame()
+        sentiment_file = "data/raw/sentiment.csv"
+        news_sentiment_file = "data/raw/news_sentiment.csv"
+
+        sentiment_data = pd.DataFrame()
+        news_sentiment = pd.DataFrame()
+
+        # Load Reddit sentiment
+        if os.path.exists(sentiment_file):
+            sentiment_data = pd.read_csv(sentiment_file)
+            if 'timestamp' in sentiment_data.columns:
+                sentiment_data['timestamp'] = pd.to_datetime(sentiment_data['timestamp'])
+                # Filter to last 24 hours
+                cutoff_time = datetime.now() - timedelta(hours=24)
+                sentiment_data = sentiment_data[sentiment_data['timestamp'] >= cutoff_time]
+
+        # Load News sentiment
+        if os.path.exists(news_sentiment_file):
+            news_sentiment = pd.read_csv(news_sentiment_file)
+            if 'timestamp' in news_sentiment.columns:
+                news_sentiment['timestamp'] = pd.to_datetime(news_sentiment['timestamp'])
+                # Filter to last 24 hours
+                cutoff_time = datetime.now() - timedelta(hours=24)
+                news_sentiment = news_sentiment[news_sentiment['timestamp'] >= cutoff_time]
+
+        # Combine both sentiment sources
+        combined_sentiment = pd.concat([sentiment_data, news_sentiment], ignore_index=True)
+
+        if not combined_sentiment.empty:
+            st.sidebar.success(f"📊 Loaded {len(combined_sentiment)} sentiment records")
+        else:
+            st.sidebar.warning("No recent sentiment data found")
+
+        return combined_sentiment
+
     except Exception as e:
         st.error(f"Error loading sentiment data: {e}")
+        return pd.DataFrame()
+
+
+def load_news_data():
+    """Load news articles data"""
+    try:
+        articles_file = "data/raw/news_articles.csv"
+
+        if os.path.exists(articles_file):
+            news_articles = pd.read_csv(articles_file)
+            if 'published_at' in news_articles.columns:
+                news_articles['published_at'] = pd.to_datetime(news_articles['published_at'])
+                # Sort by most recent
+                news_articles = news_articles.sort_values('published_at', ascending=False)
+            return news_articles
+        return pd.DataFrame()
+
+    except Exception as e:
+        st.error(f"Error loading news data: {e}")
+        return pd.DataFrame()
+
+    except Exception as e:
+        st.error(f"Error loading news data: {e}")
         return pd.DataFrame()
 
 def create_price_chart(df, symbol):
@@ -347,15 +480,16 @@ def create_price_chart(df, symbol):
 
     return fig
 
-def create_sentiment_gauge(sentiment_value, symbol):
+# REPLACE the existing create_sentiment_gauge function with this:
+def create_sentiment_gauge(sentiment_value, symbol, source):
     """Create sentiment gauge chart"""
     fig = go.Figure(go.Indicator(
         mode="gauge+number+delta",
         value=sentiment_value,
         domain={'x': [0, 1], 'y': [0, 1]},
-        title={'text': f"{symbol} Sentiment", 'font': {'color': '#f8fafc'}},
+        title={'text': f"{symbol}<br>{source} Sentiment", 'font': {'color': '#f8fafc', 'size': 16}},
         gauge={
-            'axis': {'range': [-1, 1], 'tickcolor': '#f8fafc'},
+            'axis': {'range': [-1, 1], 'tickwidth': 1, 'tickcolor': '#f8fafc'},
             'bar': {'color': "#3b82f6"},
             'bgcolor': "rgba(0,0,0,0)",
             'borderwidth': 2,
@@ -364,17 +498,114 @@ def create_sentiment_gauge(sentiment_value, symbol):
                 {'range': [-1, -0.3], 'color': 'rgba(239, 68, 68, 0.3)'},
                 {'range': [-0.3, 0.3], 'color': 'rgba(148, 163, 184, 0.3)'},
                 {'range': [0.3, 1], 'color': 'rgba(6, 214, 160, 0.3)'}
-            ]
+            ],
+            'threshold': {
+                'line': {'color': "white", 'width': 4},
+                'thickness': 0.75,
+                'value': sentiment_value
+            }
         }
     ))
 
     fig.update_layout(
         height=300,
         paper_bgcolor='rgba(0,0,0,0)',
-        font={'color': "#f8fafc"}
+        font={'color': "#f8fafc", 'family': "Arial"},
+        margin=dict(l=30, r=30, t=50, b=30)
     )
 
     return fig
+
+
+def load_news_data():
+    """Load news articles data"""
+    try:
+        articles_file = "data/raw/news_articles.csv"
+
+        if os.path.exists(articles_file):
+            news_articles = pd.read_csv(articles_file)
+            if 'published_at' in news_articles.columns:
+                news_articles['published_at'] = pd.to_datetime(news_articles['published_at'])
+                # Sort by most recent
+                news_articles = news_articles.sort_values('published_at', ascending=False)
+            return news_articles
+        return pd.DataFrame()
+
+    except Exception as e:
+        st.error(f"Error loading news data: {e}")
+        return pd.DataFrame()
+
+# Add this to your main() function in the dashboard
+def main():
+    # ... existing code ...
+
+    # Load news data
+    news_sentiment, news_articles = load_news_data()
+
+    # News Sentiment Section
+    st.markdown('<h3 class="section-header">📰 News Sentiment</h3>', unsafe_allow_html=True)
+
+    if not news_sentiment.empty:
+        col1, col2 = st.columns(2)
+
+        with col1:
+            st.markdown("""
+            <div class="metric-card">
+                <p style="color: #3b82f6; font-weight: bold; margin-bottom: 1rem;">News Sentiment Analysis</p>
+            """, unsafe_allow_html=True)
+
+            # Filter for selected symbol
+            symbol_name = selected_symbol.replace('USDT', '')
+            symbol_news_sentiment = news_sentiment[news_sentiment['symbol'] == symbol_name]
+
+            if not symbol_news_sentiment.empty:
+                latest_news_sentiment = symbol_news_sentiment.iloc[-1]
+                news_sentiment_value = latest_news_sentiment.get('avg_sentiment', 0)
+
+                # Create news sentiment gauge
+                fig_news_gauge = create_sentiment_gauge(news_sentiment_value, f"{symbol_name} News")
+                st.plotly_chart(fig_news_gauge, use_container_width=True)
+            else:
+                st.info("No recent news sentiment data for this symbol")
+
+            st.markdown('</div>', unsafe_allow_html=True)
+
+        with col2:
+            st.markdown("""
+            <div class="metric-card">
+                <p style="color: #3b82f6; font-weight: bold; margin-bottom: 1rem;">Recent News Headlines</p>
+            """, unsafe_allow_html=True)
+
+            if not news_articles.empty:
+                recent_articles = news_articles.head(5)
+
+                for _, article in recent_articles.iterrows():
+                    sentiment_emoji = "😊" if article.get('sentiment', 0) > 0.1 else "😐" if article.get('sentiment',
+                                                                                                       0) > -0.1 else "😞"
+
+                    st.markdown(f"""
+                    <div style="margin: 0.5rem 0; padding: 0.75rem; background: rgba(255,255,255,0.05); border-radius: 8px; border-left: 3px solid #3b82f6;">
+                        <p style="color: #f8fafc; margin: 0 0 0.5rem 0; font-size: 0.9rem; font-weight: 500;">{article['title']}</p>
+                        <div style="display: flex; justify-content: between; align-items: center;">
+                            <span style="color: #94a3b8; font-size: 0.8rem;">{article.get('source', 'Unknown')}</span>
+                            <span style="color: #3b82f6; font-size: 0.8rem;">{sentiment_emoji} {article.get('sentiment', 0):.2f}</span>
+                        </div>
+                    </div>
+                    """, unsafe_allow_html=True)
+            else:
+                st.info("No recent news articles available")
+
+            st.markdown('</div>', unsafe_allow_html=True)
+
+    else:
+        st.markdown("""
+        <div class="metric-card">
+            <div style="text-align: center; padding: 2rem;">
+                <h4 style="color: #3b82f6; margin-top: 0;">News Integration Ready</h4>
+                <p style="color: #94a3b8;">News sentiment analysis will appear here once you add your News API key.</p>
+            </div>
+        </div>
+        """, unsafe_allow_html=True)
 
 def main():
     # Header Section
@@ -388,7 +619,7 @@ def main():
         st.markdown('<div class="sidebar-title">🔧 Dashboard Controls</div>', unsafe_allow_html=True)
 
         # Asset type selection
-        st.markdown('**Asset Type**')
+        st.markdown('<p style="color: var(--text-primary); margin-bottom: 0.5rem;"><strong>Asset Type</strong></p>', unsafe_allow_html=True)
         asset_type = st.selectbox(
             "Select asset type:",
             ["Cryptocurrencies", "Stocks"],
@@ -397,7 +628,7 @@ def main():
         )
 
         # Symbol selection
-        st.markdown('**Select Asset**')
+        st.markdown('<p style="color: var(--text-primary); margin-bottom: 0.5rem;"><strong>Select Asset</strong></p>', unsafe_allow_html=True)
         if asset_type == "Stocks":
             available_symbols = list(ASSET_CONFIG['stocks'].keys())
             symbol_names = [f"{sym} - {ASSET_CONFIG['stocks'][sym]}" for sym in available_symbols]
@@ -410,7 +641,7 @@ def main():
             selected_symbol = selected_symbol.split(' - ')[0]
 
         # Time range
-        st.markdown('**Time Range**')
+        st.markdown('<p style="color: var(--text-primary); margin-bottom: 0.5rem;"><strong>Time Range</strong></p>', unsafe_allow_html=True)
         time_range = st.selectbox(
             "Select time range:",
             ["24H", "7D", "1M", "3M"],
@@ -419,14 +650,14 @@ def main():
         )
 
         # Auto-refresh
-        st.markdown('**Live Updates**')
+        st.markdown('<p style="color: var(--text-primary); margin-bottom: 0.5rem;"><strong>Live Updates</strong></p>', unsafe_allow_html=True)
         auto_refresh = st.checkbox("Enable Auto-refresh", value=False)
 
         # ML Model Info
         ml_predictor = load_ml_model()
         if ml_predictor and ml_predictor.best_model:
             st.markdown("---")
-            st.markdown('**AI Model Status**')
+            st.markdown('<p style="color: var(--text-primary); margin-bottom: 0.5rem;"><strong>AI Model Status</strong></p>', unsafe_allow_html=True)
             st.success(f"✅ **Model:** {ml_predictor.best_model.title()}")
             st.info(f"📊 **Accuracy:** {ml_predictor.model_performance.get('accuracy', 0):.1%}")
 
@@ -436,7 +667,33 @@ def main():
 
         if auto_refresh:
             st.rerun()
+            # ===== ADD THIS TO THE SIDEBAR SECTION =====
+            # Find the with st.sidebar: section and ADD this code at the end:
 
+            # Debug Information
+            st.markdown("---")
+            st.markdown("### 🔧 Debug Info")
+
+            # Check if sentiment files exist
+            sentiment_exists = os.path.exists("data/raw/sentiment.csv")
+            news_sentiment_exists = os.path.exists("data/raw/news_sentiment.csv")
+
+            st.write(f"Reddit Sentiment: {'✅' if sentiment_exists else '❌'}")
+            st.write(f"News Sentiment: {'✅' if news_sentiment_exists else '❌'}")
+
+            if sentiment_exists:
+                try:
+                    sentiment_df = pd.read_csv("data/raw/sentiment.csv")
+                    st.write(f"Reddit Records: {len(sentiment_df)}")
+                except:
+                    st.write("Reddit Records: Error loading")
+
+            if news_sentiment_exists:
+                try:
+                    news_df = pd.read_csv("data/raw/news_sentiment.csv")
+                    st.write(f"News Records: {len(news_df)}")
+                except:
+                    st.write("News Records: Error loading")
     # ===== MAIN DASHBOARD =====
 
     # Load data
@@ -626,48 +883,120 @@ def main():
         </div>
         """, unsafe_allow_html=True)
 
-    # Market Sentiment Section
-    st.markdown('<h3 class="section-header">📊 Market Sentiment</h3>', unsafe_allow_html=True)
+    # ===== REPLACE THE ENTIRE SENTIMENT ANALYSIS SECTION =====
+    # Find the section that starts with something like:
+    # "Sentiment Analysis Section" or "Market Sentiment"
+    # And REPLACE everything until the next section with this:
+
+    # Sentiment Analysis Section
+    st.markdown(
+        '<h3 style="color: #3b82f6; border-bottom: 2px solid #334155; padding-bottom: 0.5rem;">📊 Market Sentiment</h3>',
+        unsafe_allow_html=True)
 
     if not sentiment_data.empty:
-        col8, col9 = st.columns(2)
+        col5, col6 = st.columns(2)
 
-        with col8:
+        with col5:
             st.markdown("""
-            <div class="metric-card" style="height: 300px;">
+            <div class="metric-card">
                 <p style="color: #3b82f6; font-weight: bold; margin-bottom: 1rem;">Social Sentiment Analysis</p>
             """, unsafe_allow_html=True)
 
-            symbol_name = selected_symbol.replace('USDT', '')
+            # Get symbol name for sentiment lookup
+            symbol_name = selected_symbol
+            if selected_symbol.endswith('USDT'):
+                symbol_name = selected_symbol.replace('USDT', '')
+
+            # Filter sentiment for this symbol
             symbol_sentiment = sentiment_data[sentiment_data['symbol'] == symbol_name]
 
             if not symbol_sentiment.empty:
+                # Get the most recent sentiment
                 latest_sentiment = symbol_sentiment.iloc[-1]
                 sentiment_value = latest_sentiment.get('avg_sentiment', 0)
+                source = latest_sentiment.get('source', 'combined')
 
                 # Create sentiment gauge
-                fig_gauge = create_sentiment_gauge(sentiment_value, symbol_name)
+                fig_gauge = create_sentiment_gauge(sentiment_value, symbol_name, source.title())
                 st.plotly_chart(fig_gauge, use_container_width=True)
+
+                # Display sentiment details
+                st.markdown(f"""
+                <div style="background: rgba(59, 130, 246, 0.1); padding: 1rem; border-radius: 8px; margin-top: 1rem;">
+                    <p style="color: #94a3b8; margin: 0.3rem 0; font-size: 0.9rem;">
+                        <strong>Sentiment Score:</strong> {sentiment_value:.3f}
+                    </p>
+                    <p style="color: #94a3b8; margin: 0.3rem 0; font-size: 0.9rem;">
+                        <strong>Mentions:</strong> {latest_sentiment.get('total_mentions', 0)}
+                    </p>
+                    <p style="color: #94a3b8; margin: 0.3rem 0; font-size: 0.9rem;">
+                        <strong>Source:</strong> {source.title()}
+                    </p>
+                    <p style="color: #94a3b8; margin: 0.3rem 0; font-size: 0.9rem;">
+                        <strong>Last Updated:</strong> {latest_sentiment['timestamp'].strftime('%Y-%m-%d %H:%M')}
+                    </p>
+                </div>
+                """, unsafe_allow_html=True)
+            else:
+                st.info(f"No recent sentiment data for {symbol_name}")
+                # Show overall market sentiment
+                overall_sentiment = sentiment_data['avg_sentiment'].mean()
+                st.markdown(f"""
+                <div style="text-align: center; padding: 2rem;">
+                    <p style="color: #94a3b8;">Overall Market Sentiment</p>
+                    <p style="color: #3b82f6; font-size: 2rem; font-weight: bold; margin: 0.5rem 0;">
+                        {overall_sentiment:.3f}
+                    </p>
+                    <p style="color: #94a3b8; font-size: 0.9rem;">
+                        Based on {len(sentiment_data)} sentiment records
+                    </p>
+                </div>
+                """, unsafe_allow_html=True)
 
             st.markdown('</div>', unsafe_allow_html=True)
 
-        with col9:
+        with col6:
             st.markdown("""
-            <div class="metric-card" style="height: 300px;">
+            <div class="metric-card">
                 <p style="color: #3b82f6; font-weight: bold; margin-bottom: 1rem;">Trending Assets</p>
             """, unsafe_allow_html=True)
 
             if 'symbol' in sentiment_data.columns:
-                mention_counts = sentiment_data['symbol'].value_counts().head(5)
+                # Calculate trending assets by mentions and sentiment
+                trending_data = sentiment_data.groupby('symbol').agg({
+                    'total_mentions': 'sum',
+                    'avg_sentiment': 'mean'
+                }).reset_index()
 
-                for i, (symbol, mentions) in enumerate(mention_counts.items(), 1):
+                # Sort by mentions (most mentioned first)
+                trending_data = trending_data.sort_values('total_mentions', ascending=False)
+
+                # Display top 8 trending assets
+                for i, (_, row) in enumerate(trending_data.head(8).iterrows(), 1):
+                    symbol = row['symbol']
+                    mentions = int(row['total_mentions'])
+                    avg_sentiment = row['avg_sentiment']
+
+                    # Determine medal and sentiment emoji
                     medal = "🥇" if i == 1 else "🥈" if i == 2 else "🥉" if i == 3 else f"{i}."
+                    sentiment_emoji = "😊" if avg_sentiment > 0.1 else "😐" if avg_sentiment > -0.1 else "😞"
+                    sentiment_color = "#06d6a0" if avg_sentiment > 0.1 else "#f59e0b" if avg_sentiment > -0.1 else "#ef4444"
+
                     st.markdown(f"""
                     <div style="display: flex; justify-content: space-between; align-items: center; margin: 0.5rem 0; padding: 0.75rem; background: rgba(255,255,255,0.05); border-radius: 8px;">
-                        <span style="color: #f8fafc; font-weight: 500;">{medal} {symbol}</span>
-                        <span style="color: #3b82f6; font-weight: bold; background: rgba(59, 130, 246, 0.1); padding: 0.25rem 0.75rem; border-radius: 12px;">{mentions}</span>
+                        <div style="flex: 1;">
+                            <span style="color: #f8fafc; font-weight: 500;">{medal} {symbol}</span>
+                            <span style="color: {sentiment_color}; font-size: 0.8rem; margin-left: 0.5rem;">
+                                {sentiment_emoji} {avg_sentiment:.2f}
+                            </span>
+                        </div>
+                        <span style="color: #3b82f6; font-weight: bold; background: rgba(59, 130, 246, 0.1); padding: 0.25rem 0.75rem; border-radius: 12px;">
+                            {mentions}
+                        </span>
                     </div>
                     """, unsafe_allow_html=True)
+            else:
+                st.info("No trending data available")
 
             st.markdown('</div>', unsafe_allow_html=True)
 
@@ -675,15 +1004,69 @@ def main():
         st.markdown("""
         <div class="metric-card">
             <div style="text-align: center; padding: 2rem;">
-                <h4 style="color: #3b82f6; margin-top: 0;">Collecting Market Data</h4>
-                <p style="color: #94a3b8;">Run the data collection to analyze social sentiment from financial discussions.</p>
+                <h4 style="color: #3b82f6; margin-top: 0;">Collecting Sentiment Data</h4>
+                <p style="color: #94a3b8;">Sentiment analysis from Reddit and News API will appear here once collected.</p>
+                <div style="margin-top: 1rem;">
+                    <p style="color: #3b82f6; font-family: monospace; background: rgba(59, 130, 246, 0.1); padding: 1rem; border-radius: 8px;">
+                        Run data collection to get sentiment data
+                    </p>
+                </div>
             </div>
         </div>
         """, unsafe_allow_html=True)
 
+    # News Articles Section
+    st.markdown(
+        '<h3 style="color: #3b82f6; border-bottom: 2px solid #334155; padding-bottom: 0.5rem; margin-top: 2rem;">📰 Recent News Headlines</h3>',
+        unsafe_allow_html=True)
+
+    # Load news articles data
+    news_articles_df = load_news_data()
+
+    if isinstance(news_articles_df, pd.DataFrame) and not news_articles_df.empty:
+        # Display recent news articles
+        for i, (_, article) in enumerate(news_articles_df.head(5).iterrows()):
+            sentiment_value = article.get('sentiment', 0)
+            sentiment_emoji = "😊" if sentiment_value > 0.1 else "😐" if sentiment_value > -0.1 else "😞"
+            sentiment_color = "#06d6a0" if sentiment_value > 0.1 else "#f59e0b" if sentiment_value > -0.1 else "#ef4444"
+
+            # Truncate long titles
+            title = article['title']
+            if len(title) > 100:
+                title = title[:100] + "..."
+
+            # Format published date if available
+            published_at = article.get('published_at', '')
+            if hasattr(published_at, 'strftime'):
+                published_at = published_at.strftime('%Y-%m-%d %H:%M')
+
+            st.markdown(f"""
+            <div style="margin: 1rem 0; padding: 1rem; background: rgba(255,255,255,0.05); border-radius: 8px; border-left: 4px solid {sentiment_color};">
+                <p style="color: #f8fafc; margin: 0 0 0.5rem 0; font-size: 0.95rem; font-weight: 500; line-height: 1.4;">
+                    {title}
+                </p>
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <span style="color: #94a3b8; font-size: 0.8rem;">
+                        {article.get('source', 'Unknown Source')}
+                    </span>
+                    <div style="display: flex; align-items: center; gap: 0.5rem;">
+                        <span style="color: {sentiment_color}; font-size: 0.8rem;">
+                            {sentiment_emoji} {sentiment_value:.2f}
+                        </span>
+                        <span style="color: #94a3b8; font-size: 0.8rem;">
+                            {published_at}
+                        </span>
+                    </div>
+                </div>
+            </div>
+            """, unsafe_allow_html=True)
+    else:
+        st.info("No recent news articles available")
+
     # Footer
     st.markdown("---")
-    st.markdown("""
+    current_time = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+    st.markdown(f"""
     <div style="text-align: center; color: #94a3b8; padding: 2rem 0;">
         <p style="font-size: 0.9rem; margin: 0.5rem 0;">
             <strong>Quantum Trader AI</strong> - Advanced Analytics Platform
@@ -692,10 +1075,10 @@ def main():
             Real-time Stock & Crypto Analysis • Machine Learning Predictions • Market Sentiment
         </p>
         <p style="font-size: 0.7rem; margin: 0.5rem 0; opacity: 0.7;">
-            Last updated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
+            Last updated: {current_time}
         </p>
     </div>
-    """.format(datetime.now().strftime('%Y-%m-%d %H:%M:%S')), unsafe_allow_html=True)
+    """, unsafe_allow_html=True)
 
 if __name__ == "__main__":
     main()
