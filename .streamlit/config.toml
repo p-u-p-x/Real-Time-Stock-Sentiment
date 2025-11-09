@@ -1,6 +1,8 @@
 [server]
 port = 8501
 address = "0.0.0.0"
+enableCORS = false
+enableXsrfProtection = false
 
 [browser]
 serverAddress = "localhost"
@@ -12,3 +14,6 @@ backgroundColor = "#ffffff"
 secondaryBackgroundColor = "#f0f2f6"
 textColor = "#262730"
 font = "sans serif"
+
+[runner]
+magicEnabled = false

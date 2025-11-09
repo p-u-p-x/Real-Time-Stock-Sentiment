@@ -1,36 +1,35 @@
 # Core Data Science
-pandas>=1.5.0
-numpy>=1.21.0
+pandas==2.0.3
+numpy==1.24.3
 
 # APIs
-python-binance>=1.0.19
-praw>=7.7.1
-yfinance>=0.2.18
-newsapi-python>=0.1.6
-requests>=2.31.0
+python-binance==1.0.19
+praw==7.7.1
+yfinance==0.2.18
+newsapi-python==0.1.6
+requests==2.31.0
 
 # Sentiment Analysis & ML
-textblob>=0.17.1
-nltk>=3.8.1
-scikit-learn>=1.2.0
-xgboost>=1.7.0
-lightgbm>=3.3.0
-catboost>=1.0.0
+textblob==0.17.1
+nltk==3.8.1
+scikit-learn==1.2.0
+xgboost==1.7.0
+lightgbm==3.3.0
+catboost==1.0.0
 
 # Technical Analysis
-ta>=0.10.0
+ta==0.10.0
 
 # Dashboard & Visualization
-streamlit>=1.28.0
-plotly>=5.15.0
+streamlit==1.28.0
+plotly==5.15.0
 
 # Utilities
-python-dotenv>=1.0.0
-tqdm>=4.65.0
-schedule>=1.2.0
-websocket-client>=1.6.3
+python-dotenv==1.0.0
+tqdm==4.65.0
+schedule==1.2.0
+websocket-client==1.6.3
 
-# Additional for enhanced functionality
-threading
-subprocess
-datetime
+# Deployment specific
+gunicorn==21.2.0
+Werkzeug==2.3.7

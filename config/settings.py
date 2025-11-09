@@ -3,36 +3,44 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
+# Deployment-safe configuration with fallbacks
+def get_env_var(var_name, default=None):
+    """Safely get environment variable with fallback"""
+    value = os.getenv(var_name, default)
+    if value == f"your_{var_name.lower()}_here":
+        return None
+    return value
+
 # Binance Configuration (for backward compatibility)
 BINANCE_CONFIG = {
-    'api_key': os.getenv('BINANCE_API_KEY'),
-    'api_secret': os.getenv('BINANCE_SECRET_KEY'),
+    'api_key': get_env_var('BINANCE_API_KEY'),
+    'api_secret': get_env_var('BINANCE_SECRET_KEY'),
     'testnet': True
 }
 
 # Reddit Configuration (for backward compatibility)
 REDDIT_CONFIG = {
-    'client_id': os.getenv('REDDIT_CLIENT_ID'),
-    'client_secret': os.getenv('REDDIT_CLIENT_SECRET'),
-    'user_agent': os.getenv('REDDIT_USER_AGENT', 'QuantumTraderAI/1.0')
+    'client_id': get_env_var('REDDIT_CLIENT_ID'),
+    'client_secret': get_env_var('REDDIT_CLIENT_SECRET'),
+    'user_agent': get_env_var('REDDIT_USER_AGENT', 'QuantumTraderAI/1.0')
 }
 
 # News API Configuration (for backward compatibility)
 NEWS_API_CONFIG = {
-    'api_key': os.getenv('NEWS_API_KEY'),
+    'api_key': get_env_var('NEWS_API_KEY'),
     'provider': 'newsapi'
 }
 
 # Individual API Keys (new structure)
-REDDIT_CLIENT_ID = os.getenv('REDDIT_CLIENT_ID')
-REDDIT_CLIENT_SECRET = os.getenv('REDDIT_CLIENT_SECRET')
-REDDIT_USER_AGENT = os.getenv('REDDIT_USER_AGENT', 'QuantumTraderAI/1.0')
-BINANCE_API_KEY = os.getenv('BINANCE_API_KEY')
-BINANCE_SECRET_KEY = os.getenv('BINANCE_SECRET_KEY')
-ALPHA_VANTAGE_API_KEY = os.getenv('ALPHA_VANTAGE_API_KEY')
-NEWS_API_KEY = os.getenv('NEWS_API_KEY')
+REDDIT_CLIENT_ID = get_env_var('REDDIT_CLIENT_ID')
+REDDIT_CLIENT_SECRET = get_env_var('REDDIT_CLIENT_SECRET')
+REDDIT_USER_AGENT = get_env_var('REDDIT_USER_AGENT', 'QuantumTraderAI/1.0')
+BINANCE_API_KEY = get_env_var('BINANCE_API_KEY')
+BINANCE_SECRET_KEY = get_env_var('BINANCE_SECRET_KEY')
+ALPHA_VANTAGE_API_KEY = get_env_var('ALPHA_VANTAGE_API_KEY')
+NEWS_API_KEY = get_env_var('NEWS_API_KEY')
 
-# Trading Symbols
+# Trading Symbols - KEEPING YOUR EXACT SYMBOLS
 CRYPTO_SYMBOLS = [
     'BTCUSDT', 'ETHUSDT', 'ADAUSDT', 'DOTUSDT',
     'LINKUSDT', 'SOLUSDT', 'XRPUSDT', 'DOGEUSDT'
@@ -49,7 +57,7 @@ ALL_SYMBOLS = CRYPTO_SYMBOLS + STOCK_SYMBOLS
 # For backward compatibility - use ALL_SYMBOLS
 SYMBOLS = ALL_SYMBOLS
 
-# Asset Display Names
+# Asset Display Names - KEEPING YOUR EXACT NAMES
 ASSET_DISPLAY_NAMES = {
     # Crypto
     'BTCUSDT': 'Bitcoin',
@@ -109,3 +117,6 @@ DATABASE_URL = 'sqlite:///data/trading_data.db'
 # Logging Configuration
 LOG_LEVEL = 'INFO'
 LOG_FORMAT = '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+
+# Deployment Configuration
+DEPLOYMENT_MODE = os.getenv('DEPLOYMENT_MODE', 'development')
