@@ -286,6 +286,28 @@ st.markdown("""
         border: 1px solid var(--danger) !important;
         color: var(--text-primary) !important;
     }
+
+    /* Fix for overlapping headings and charts */
+    .main .block-container {
+        padding-top: 2rem;
+        padding-bottom: 2rem;
+    }
+
+    /* Ensure proper spacing between sections */
+    .element-container {
+        margin-bottom: 1.5rem;
+    }
+
+    /* Fix chart container spacing */
+    .stPlotlyChart {
+        margin-top: 1rem;
+        margin-bottom: 1rem;
+    }
+
+    /* Specific fix for sentiment gauge spacing */
+    [data-testid="stVerticalBlock"] > [style*="flex-direction: column;"] > [data-testid="stVerticalBlock"] {
+        gap: 0.5rem;
+    }
 </style>
 """, unsafe_allow_html=True)
 
@@ -1094,6 +1116,9 @@ def main():
         # Sentiment Analysis Section
         st.markdown('<h2 class="section-header">📊 Market Sentiment</h2>', unsafe_allow_html=True)
 
+        # Add spacing between heading and chart
+        st.markdown('<div style="margin-bottom: 1.5rem;"></div>', unsafe_allow_html=True)
+
         # Get symbol name for sentiment lookup
         symbol_for_sentiment = get_symbol_for_sentiment(selected_symbol, asset_type_selected)
 
@@ -1162,6 +1187,9 @@ def main():
     with col_right:
         # AI Predictions Section
         st.markdown('<h2 class="section-header">🤖 AI Predictions</h2>', unsafe_allow_html=True)
+
+        # Add spacing between heading and content
+        st.markdown('<div style="margin-bottom: 1.5rem;"></div>', unsafe_allow_html=True)
 
         # Use the live prediction
         pred_class = "prediction-up" if prediction['prediction'] == 'UP' else "prediction-down"
