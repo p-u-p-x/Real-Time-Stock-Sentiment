@@ -27,3 +27,14 @@ ta-lib==0.4.26
 
 yfinance>=0.2.18
 newsapi-python>=0.1.6
+
+# Enhanced ML libraries
+xgboost>=1.7.0
+lightgbm>=3.3.0
+catboost>=1.0.0
+
+# Technical analysis
+ta-lib==0.4.26
+
+# Plotly for advanced charts
+plotly>=5.15.0

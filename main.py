@@ -9,7 +9,7 @@ import os
 # Add src to path - FIXED PATH
 sys.path.append(os.path.join(os.path.dirname(__file__), 'src'))
 
-# Import from correct modules
+# Import from correct modules with enhanced error handling
 try:
     from src.data.binance_client import BinanceDataCollector
     from src.data.stock_client import StockDataCollector
@@ -19,20 +19,50 @@ try:
     from src.models.price_predictor import PricePredictor
     from src.models.feature_engineer import FeatureEngineer
     from config.settings import (BINANCE_CONFIG, REDDIT_CONFIG, NEWS_API_CONFIG,
-                               CRYPTO_SYMBOLS, STOCK_SYMBOLS, ALL_SYMBOLS, SUBREDDITS)
+                                 CRYPTO_SYMBOLS, STOCK_SYMBOLS, ALL_SYMBOLS, SUBREDDITS)
 except ImportError as e:
     print(f"Import error: {e}")
     print("Trying alternative import structure...")
-    # Alternative imports
-    from data.binance_client import BinanceDataCollector
-    from data.stock_client import StockDataCollector
-    from data.reddit_client import RedditSentimentCollector
-    from data.news_client import NewsSentimentCollector
-    from utils.data_manager import DataManager
-    from models.price_predictor import PricePredictor
-    from models.feature_engineer import FeatureEngineer
-    from config.settings import (BINANCE_CONFIG, REDDIT_CONFIG, NEWS_API_CONFIG,
-                               CRYPTO_SYMBOLS, STOCK_SYMBOLS, ALL_SYMBOLS, SUBREDDITS)
+    try:
+        # Alternative imports
+        from data.binance_client import BinanceDataCollector
+        from data.stock_client import StockDataCollector
+        from data.reddit_client import RedditSentimentCollector
+        from data.news_client import NewsSentimentCollector
+        from utils.data_manager import DataManager
+        from models.price_predictor import PricePredictor
+        from models.feature_engineer import FeatureEngineer
+        from config.settings import (BINANCE_CONFIG, REDDIT_CONFIG, NEWS_API_CONFIG,
+                                     CRYPTO_SYMBOLS, STOCK_SYMBOLS, ALL_SYMBOLS, SUBREDDITS)
+    except ImportError as e2:
+        print(f"Alternative import also failed: {e2}")
+        print("Creating fallback configuration...")
+
+        # Fallback configuration
+        from config.settings import (
+            CRYPTO_SYMBOLS, STOCK_SYMBOLS, ALL_SYMBOLS, SUBREDDITS,
+            REDDIT_CLIENT_ID, REDDIT_CLIENT_SECRET, REDDIT_USER_AGENT,
+            BINANCE_API_KEY, BINANCE_SECRET_KEY, NEWS_API_KEY
+        )
+
+        # Recreate config dictionaries
+        BINANCE_CONFIG = {
+            'api_key': BINANCE_API_KEY,
+            'api_secret': BINANCE_SECRET_KEY,
+            'testnet': True
+        }
+
+        REDDIT_CONFIG = {
+            'client_id': REDDIT_CLIENT_ID,
+            'client_secret': REDDIT_CLIENT_SECRET,
+            'user_agent': REDDIT_USER_AGENT
+        }
+
+        NEWS_API_CONFIG = {
+            'api_key': NEWS_API_KEY,
+            'provider': 'newsapi'
+        }
+
 logging.basicConfig(
     level=logging.INFO,
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
@@ -47,26 +77,31 @@ logger = logging.getLogger(__name__)
 class RealTimeMarketSentiment:
     def __init__(self):
         # Initialize data collectors
-        self.binance_collector = BinanceDataCollector(
-            BINANCE_CONFIG['api_key'],
-            BINANCE_CONFIG['api_secret']
-        )
-        self.stock_collector = StockDataCollector()
-        self.reddit_collector = RedditSentimentCollector(
-            REDDIT_CONFIG['client_id'],
-            REDDIT_CONFIG['client_secret'],
-            REDDIT_CONFIG['user_agent']
-        )
-        self.news_collector = NewsSentimentCollector(
-            NEWS_API_CONFIG['api_key'],
-            NEWS_API_CONFIG['provider']
-        )
+        try:
+            self.binance_collector = BinanceDataCollector(
+                BINANCE_CONFIG['api_key'],
+                BINANCE_CONFIG['api_secret']
+            )
+            self.stock_collector = StockDataCollector()
+            self.reddit_collector = RedditSentimentCollector(
+                REDDIT_CONFIG['client_id'],
+                REDDIT_CONFIG['client_secret'],
+                REDDIT_CONFIG['user_agent']
+            )
+            self.news_collector = NewsSentimentCollector(
+                NEWS_API_CONFIG['api_key'],
+                NEWS_API_CONFIG['provider']
+            )
 
-        self.data_manager = DataManager()
-        self.feature_engineer = FeatureEngineer()
-        self.predictor = None
-        self.is_running = False
-        self.setup_prediction_engine()
+            self.data_manager = DataManager()
+            self.feature_engineer = FeatureEngineer()
+            self.predictor = None
+            self.is_running = False
+            self.setup_prediction_engine()
+
+        except Exception as e:
+            logger.error(f"Error initializing application: {e}")
+            raise
 
     def setup_prediction_engine(self):
         """Setup ML prediction engine"""
@@ -87,27 +122,33 @@ class RealTimeMarketSentiment:
     def collect_crypto_data(self):
         """Collect cryptocurrency data from Binance"""
         logger.info("💰 Collecting cryptocurrency data...")
+        successful_crypto = 0
+
         try:
             for symbol in CRYPTO_SYMBOLS:
-                historical_data = self.binance_collector.get_historical_data(symbol, '1h', 1)
-                if not historical_data.empty:
-                    self.data_manager.save_price_data(symbol, historical_data)
-                    logger.info(f"✅ Collected {len(historical_data)} records for {symbol}")
+                try:
+                    historical_data = self.binance_collector.get_historical_data(symbol, '1h', 1)
+                    if not historical_data.empty:
+                        self.data_manager.save_price_data(symbol, historical_data)
+                        logger.info(f"✅ Collected {len(historical_data)} records for {symbol}")
 
-                    # Show latest price
-                    latest = historical_data.iloc[-1]
-                    print(f"   {symbol}: ${latest['close']:,.2f} (Volume: {latest['volume']:.0f})")
-                else:
-                    logger.warning(f"❌ No data collected for {symbol}")
+                        # Show latest price
+                        latest = historical_data.iloc[-1]
+                        print(f"   {symbol}: ${latest['close']:,.2f} (Volume: {latest['volume']:.0f})")
+                        successful_crypto += 1
+                    else:
+                        logger.warning(f"❌ No data collected for {symbol}")
 
-                time.sleep(0.5)  # Rate limiting
+                    time.sleep(0.5)  # Rate limiting
+
+                except Exception as e:
+                    logger.error(f"Error collecting data for {symbol}: {e}")
+                    continue
+
+            print(f"💰 Crypto Collection Summary: {successful_crypto}/{len(CRYPTO_SYMBOLS)} successful")
 
         except Exception as e:
             logger.error(f"Error collecting crypto data: {e}")
-
-    # In your main.py, update the collect_stock_data method:
-
-    # In your main.py, update the collect_stock_data method:
 
     def collect_stock_data(self):
         """Collect stock data using yfinance"""
@@ -139,15 +180,23 @@ class RealTimeMarketSentiment:
             logger.error(f"Error collecting stock data: {str(e)}")
 
     def collect_reddit_sentiment(self):
-        """Collect sentiment data from Reddit"""
+        """Collect sentiment data from Reddit with enhanced stock coverage"""
         logger.info("🔴 Collecting Reddit sentiment data...")
         try:
             posts_data = []
-            for subreddit in SUBREDDITS:
-                posts = self.reddit_collector.get_recent_posts(subreddit, limit=15)
-                posts_data.extend(posts)
-                time.sleep(1)  # Rate limiting
-                print(f"   Collected {len(posts)} posts from r/{subreddit}")
+
+            # Enhanced subreddit list with stock-focused communities
+            enhanced_subreddits = SUBREDDITS + ['stocks', 'investing', 'wallstreetbets', 'StockMarket', 'trading']
+
+            for subreddit in enhanced_subreddits:
+                try:
+                    posts = self.reddit_collector.get_recent_posts(subreddit, limit=20)
+                    posts_data.extend(posts)
+                    time.sleep(1)  # Rate limiting
+                    print(f"   Collected {len(posts)} posts from r/{subreddit}")
+                except Exception as e:
+                    logger.error(f"Error collecting from r/{subreddit}: {e}")
+                    continue
 
             if posts_data:
                 # Create sentiment summary
@@ -182,7 +231,12 @@ class RealTimeMarketSentiment:
 
                 print("📊 Reddit Sentiment Summary:")
                 if not df_sentiment.empty:
-                    for _, row in df_sentiment.iterrows():
+                    stock_sentiments = [s for s in sentiment_summary if s['symbol'] in STOCK_SYMBOLS]
+                    crypto_sentiments = [s for s in sentiment_summary if s['symbol'] not in STOCK_SYMBOLS]
+
+                    print(f"   Stocks: {len(stock_sentiments)}, Crypto: {len(crypto_sentiments)}")
+
+                    for _, row in df_sentiment.head(10).iterrows():  # Show top 10
                         sentiment_emoji = "😊" if row['avg_sentiment'] > 0.1 else "😐" if row[
                                                                                             'avg_sentiment'] > -0.1 else "😞"
                         print(
@@ -196,20 +250,26 @@ class RealTimeMarketSentiment:
             logger.error(f"Error collecting Reddit sentiment: {e}")
 
     def collect_news_sentiment(self):
-        """Collect news sentiment data"""
-        logger.info("📰 Collecting news sentiment data...")
+        """Collect comprehensive news sentiment data for both crypto and stocks"""
+        logger.info("📰 Collecting comprehensive news sentiment data...")
         try:
-            sentiment_summary, articles = self.news_collector.get_crypto_news_sentiment()
+            sentiment_summary, articles = self.news_collector.get_comprehensive_news_sentiment()
 
             if sentiment_summary:
                 self.data_manager.save_news_data(sentiment_summary, articles)
 
-                print("📊 News Sentiment Summary:")
-                for item in sentiment_summary:
+                stock_sentiments = [s for s in sentiment_summary if s['symbol'] in STOCK_SYMBOLS]
+                crypto_sentiments = [s for s in sentiment_summary if s['symbol'] not in STOCK_SYMBOLS]
+
+                print("📊 Comprehensive News Sentiment Summary:")
+                print(f"   Stocks: {len(stock_sentiments)}, Crypto: {len(crypto_sentiments)}")
+
+                for item in sentiment_summary[:10]:  # Show top 10
                     sentiment_emoji = "😊" if item['avg_sentiment'] > 0.1 else "😐" if item[
                                                                                          'avg_sentiment'] > -0.1 else "😞"
+                    asset_type = "📈" if item['symbol'] in STOCK_SYMBOLS else "💰"
                     print(
-                        f"   {item['symbol']}: {item['avg_sentiment']:.2f} {sentiment_emoji} ({item['total_mentions']} mentions)")
+                        f"   {asset_type} {item['symbol']}: {item['avg_sentiment']:.2f} {sentiment_emoji} ({item['total_mentions']} mentions)")
             else:
                 logger.warning("❌ No news sentiment data collected")
 
@@ -303,10 +363,12 @@ class RealTimeMarketSentiment:
             predictions = self.generate_predictions()
             if predictions:
                 print("\n🤖 ML Predictions Summary:")
-                for symbol, pred in predictions.items():
+                for symbol, pred in list(predictions.items())[:10]:  # Show top 10
                     arrow = "🔼" if pred['prediction'] == 'UP' else "🔽"
                     confidence_color = "🟢" if pred['confidence'] > 0.7 else "🟡" if pred['confidence'] > 0.6 else "🔴"
-                    print(f"   {symbol}: {arrow} {pred['prediction']} {confidence_color} ({pred['confidence']:.1%})")
+                    asset_type = "📈" if symbol in STOCK_SYMBOLS else "💰"
+                    print(
+                        f"   {asset_type} {symbol}: {arrow} {pred['prediction']} {confidence_color} ({pred['confidence']:.1%})")
 
         print(f"✅ Cycle completed at: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
         print("=" * 60 + "\n")
@@ -340,39 +402,79 @@ class RealTimeMarketSentiment:
 
 
 def main():
+    # Create necessary directories
+    os.makedirs('data/raw', exist_ok=True)
+    os.makedirs('data/processed', exist_ok=True)
+    os.makedirs('models', exist_ok=True)
+    os.makedirs('logs', exist_ok=True)
+
     app = RealTimeMarketSentiment()
 
-    print("🤖 Real-Time Stock & Crypto Sentiment Tracker")
-    print("=" * 50)
-    print("1. Run once (Collect all data)")
-    print("2. Start scheduled collection")
-    print("3. Test APIs only")
-    print("4. Train ML models")
-    print("5. Start Dashboard")
+    while True:
+        print("\n" + "=" * 50)
+        print("🤖 Real-Time Stock & Crypto Sentiment Tracker")
+        print("=" * 50)
+        print("1. Run once (Collect all data)")
+        print("2. Start scheduled collection")
+        print("3. Test APIs only")
+        print("4. Train ML models")
+        print("5. Start Dashboard")
+        print("6. Exit")
+        print("-" * 50)
 
-    choice = input("\nChoose option (1-5): ").strip()
+        choice = input("\nChoose option (1-6): ").strip()
 
-    if choice == "1":
-        app.run_once()
-    elif choice == "2":
-        interval = input("Enter interval in minutes (default 5): ").strip()
-        interval = int(interval) if interval.isdigit() else 5
-        app.start_scheduled(interval)
-    elif choice == "3":
-        # Test APIs
-        from notebooks.test_both_apis import test_binance, test_reddit
-        test_binance()
-        test_reddit()
-    elif choice == "4":
-        # Train ML models
-        from notebooks.train_models import main as train_main
-        train_main()
-    elif choice == "5":
-        # Start dashboard
-        print("Starting dashboard...")
-        os.system("streamlit run src/dashboard/app.py")
-    else:
-        print("❌ Invalid choice")
+        if choice == "1":
+            app.run_once()
+        elif choice == "2":
+            interval = input("Enter interval in minutes (default 5): ").strip()
+            interval = int(interval) if interval.isdigit() else 5
+            app.start_scheduled(interval)
+        elif choice == "3":
+            # Test APIs
+            try:
+                from notebooks.test_both_apis import test_binance, test_reddit
+                test_binance()
+                test_reddit()
+            except ImportError as e:
+                print(f"❌ API test import error: {e}")
+                print("💡 Make sure test_both_apis.py exists in notebooks folder")
+        elif choice == "4":
+            # Train ML models
+            try:
+                from notebooks.train_models import main as train_main
+                train_main()
+            except ImportError as e:
+                print(f"❌ Training import error: {e}")
+                print("💡 Make sure train_models.py exists in notebooks folder")
+            except Exception as e:
+                print(f"❌ Training error: {e}")
+        elif choice == "5":
+            # Start dashboard
+            print("📊 Starting dashboard...")
+            try:
+                # Try different dashboard paths
+                dashboard_paths = [
+                    'src/dashboard/app.py',
+                    'dashboard/app.py',
+                    'app.py'
+                ]
+
+                for path in dashboard_paths:
+                    if os.path.exists(path):
+                        os.system(f"streamlit run {path}")
+                        break
+                else:
+                    print("❌ No dashboard file found. Checked:")
+                    for path in dashboard_paths:
+                        print(f"   - {path}")
+            except Exception as e:
+                print(f"❌ Dashboard error: {e}")
+        elif choice == "6":
+            print("👋 Goodbye!")
+            break
+        else:
+            print("❌ Invalid choice. Please select 1-6.")
 
 
 if __name__ == "__main__":

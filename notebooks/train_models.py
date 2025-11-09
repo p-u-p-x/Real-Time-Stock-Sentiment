@@ -1,128 +1,249 @@
 import sys
 import os
-
-sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
-
 import pandas as pd
 import numpy as np
+from datetime import datetime, timedelta
+import logging
+
+# Add project root to path
+current_dir = os.path.dirname(os.path.abspath(__file__))
+project_root = os.path.abspath(os.path.join(current_dir, '..'))
+sys.path.insert(0, project_root)
+
 from src.models.feature_engineer import FeatureEngineer
 from src.models.price_predictor import PricePredictor
-from config.settings import SYMBOLS
-import logging
+from config.settings import ALL_SYMBOLS, CRYPTO_SYMBOLS, STOCK_SYMBOLS
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 
-def load_training_data():
-    """Load all available data for training"""
+def load_training_data(symbols):
+    """Load and combine training data from multiple symbols"""
     all_price_data = []
     all_sentiment_data = []
 
-    # Load price data for all symbols
-    for symbol in SYMBOLS:
-        price_file = f"data/raw/{symbol}_prices.csv"
-        if os.path.exists(price_file):
-            df = pd.read_csv(price_file)
-            df['symbol'] = symbol  # Add symbol column for identification
-            all_price_data.append(df)
-            logger.info(f"Loaded {len(df)} records for {symbol}")
+    for symbol in symbols:
+        try:
+            # Load price data
+            price_file = f"data/raw/{symbol}_prices.csv"
+            if os.path.exists(price_file):
+                price_data = pd.read_csv(price_file)
+                price_data['symbol'] = symbol
+                if 'timestamp' in price_data.columns:
+                    price_data['timestamp'] = pd.to_datetime(price_data['timestamp'])
+                all_price_data.append(price_data)
+                logger.info(f"Loaded price data for {symbol}: {len(price_data)} records")
+
+            # Load sentiment data
+            sentiment_file = "data/raw/sentiment.csv"
+            if os.path.exists(sentiment_file):
+                sentiment_data = pd.read_csv(sentiment_file)
+                if 'timestamp' in sentiment_data.columns:
+                    sentiment_data['timestamp'] = pd.to_datetime(sentiment_data['timestamp'])
+                # Filter for current symbol
+                symbol_name = symbol.replace('USDT', '') if 'USDT' in symbol else symbol
+                symbol_sentiment = sentiment_data[sentiment_data['symbol'] == symbol_name]
+                if not symbol_sentiment.empty:
+                    all_sentiment_data.append(symbol_sentiment)
+
+        except Exception as e:
+            logger.error(f"Error loading data for {symbol}: {e}")
+
+    # Combine all data
+    combined_price_data = pd.concat(all_price_data, ignore_index=True) if all_price_data else pd.DataFrame()
+    combined_sentiment_data = pd.concat(all_sentiment_data, ignore_index=True) if all_sentiment_data else pd.DataFrame()
+
+    logger.info(f"Combined data - Price: {len(combined_price_data)}, Sentiment: {len(combined_sentiment_data)}")
+    return combined_price_data, combined_sentiment_data
+
+
+def prepare_features(price_data, sentiment_data):
+    """Prepare features for training"""
+    try:
+        feature_engineer = FeatureEngineer()
+
+        if price_data.empty:
+            logger.error("No price data available for feature engineering")
+            return pd.DataFrame(), pd.Series(), []
+
+        # Prepare training data
+        X, y, feature_columns = feature_engineer.prepare_training_data(price_data, sentiment_data)
+
+        if X.empty or y.empty:
+            logger.error("No features or target generated")
+            return pd.DataFrame(), pd.Series(), []
+
+        logger.info(f"Feature engineering completed - X: {X.shape}, y: {y.shape}")
+        logger.info(f"Feature columns: {len(feature_columns)}")
+
+        return X, y, feature_columns
+
+    except Exception as e:
+        logger.error(f"Error in feature preparation: {e}")
+        import traceback
+        logger.error(traceback.format_exc())
+        return pd.DataFrame(), pd.Series(), []
+
+
+def train_and_evaluate_models(X, y):
+    """Train and evaluate machine learning models with error handling"""
+    try:
+        if X.empty or y.empty:
+            logger.error("No data available for training")
+            return None
+
+        # Initialize and train predictor
+        predictor = PricePredictor()
+
+        logger.info("Starting model training...")
+        performance = predictor.train_models(X, y)
+
+        if performance and predictor.best_model:
+            logger.info("✅ Model training completed successfully!")
+
+            # Use get() method to safely access performance metrics
+            best_model = performance.get('best_model', 'N/A')
+            accuracy = performance.get('accuracy', 0)
+            f1_score = performance.get('f1_score', 0)
+            roc_auc = performance.get('roc_auc', 0)
+
+            logger.info(f"Best model: {best_model}")
+            logger.info(f"Accuracy: {accuracy:.3f}")
+            logger.info(f"F1 Score: {f1_score:.3f}")
+            logger.info(f"ROC AUC: {roc_auc:.3f}")
+
+            # Save the trained model
+            predictor.save_model()
+            return predictor
         else:
-            logger.warning(f"No data file found for {symbol}")
+            logger.error("❌ Model training failed")
+            return None
 
-    # Load sentiment data
-    sentiment_file = "data/raw/sentiment.csv"
-    if os.path.exists(sentiment_file):
-        sentiment_data = pd.read_csv(sentiment_file)
-        logger.info(f"Loaded {len(sentiment_data)} sentiment records")
-    else:
-        sentiment_data = pd.DataFrame()
-        logger.warning("No sentiment data found")
-
-    if all_price_data:
-        combined_price_data = pd.concat(all_price_data, ignore_index=True)
-        return combined_price_data, sentiment_data
-    else:
-        raise ValueError("No price data available for training")
+    except Exception as e:
+        logger.error(f"Error in model training: {e}")
+        import traceback
+        logger.error(traceback.format_exc())
+        return None
 
 
-def validate_features(X, y):
-    """Validate that features are ready for training"""
-    if X.empty or y.empty:
-        return False
+def analyze_feature_importance(predictor, feature_columns):
+    """Analyze and display feature importance"""
+    try:
+        if not predictor or not hasattr(predictor, 'feature_importance'):
+            return
 
-    # Check for NaN values
-    if X.isna().any().any() or y.isna().any():
-        logger.warning("NaN values found in features or target")
-        return False
+        feature_importance = predictor.feature_importance
+        if not feature_importance:
+            return
 
-    # Check that all features are numeric
-    non_numeric_cols = X.select_dtypes(exclude=[np.number]).columns
-    if len(non_numeric_cols) > 0:
-        logger.error(f"Non-numeric columns found: {list(non_numeric_cols)}")
-        return False
+        # Create feature importance DataFrame
+        importance_df = pd.DataFrame({
+            'feature': list(feature_importance.keys()),
+            'importance': list(feature_importance.values())
+        }).sort_values('importance', ascending=False)
 
-    # Check target distribution
-    target_counts = y.value_counts()
-    if len(target_counts) < 2:
-        logger.error("Target has only one class")
-        return False
+        print("\n" + "=" * 50)
+        print("TOP 20 FEATURE IMPORTANCES")
+        print("=" * 50)
 
-    logger.info(f"Target distribution: {target_counts.to_dict()}")
-    return True
+        for i, (_, row) in enumerate(importance_df.head(20).iterrows(), 1):
+            print(f"{i:2d}. {row['feature']:30} {row['importance']:.4f}")
+
+        print("=" * 50)
+
+    except Exception as e:
+        logger.error(f"Error analyzing feature importance: {e}")
+
+
+def save_sample_predictions(predictor, price_data, feature_columns):
+    """Save sample predictions for dashboard display"""
+    try:
+        if not predictor or price_data.empty:
+            return
+
+        # Create sample predictions for recent data
+        recent_data = price_data.tail(100)  # Last 100 records
+
+        predictions = []
+        for _, row in recent_data.iterrows():
+            try:
+                # Create feature vector (simplified - in practice, use FeatureEngineer)
+                features = {}
+                for col in feature_columns:
+                    if col in row:
+                        features[col] = row[col]
+                    else:
+                        features[col] = 0
+
+                # Make prediction
+                prediction = predictor.predict_next_hour(features)
+                prediction['symbol'] = row.get('symbol', 'UNKNOWN')
+                prediction['timestamp'] = row.get('timestamp', datetime.now())
+                predictions.append(prediction)
+
+            except Exception as e:
+                logger.warning(f"Error making prediction for row: {e}")
+                continue
+
+        if predictions:
+            # Save to CSV for dashboard
+            pred_df = pd.DataFrame(predictions)
+            os.makedirs('data/processed', exist_ok=True)
+            pred_df.to_csv('data/processed/predictions.csv', index=False)
+            logger.info(f"Saved {len(predictions)} sample predictions")
+
+    except Exception as e:
+        logger.error(f"Error saving sample predictions: {e}")
 
 
 def main():
     """Main training function"""
-    logger.info("🚀 Starting ML Model Training...")
+    print("🚀 Starting ML Model Training...")
+    print("=" * 60)
 
-    try:
-        # Load data
-        price_data, sentiment_data = load_training_data()
-        logger.info(f"Total training records: {len(price_data)}")
+    # Check if data exists
+    if not os.path.exists("data/raw"):
+        print("❌ No data found. Please run data collection first.")
+        print("💡 Run: python main.py and choose option 1")
+        return
 
-        if len(price_data) < 50:
-            logger.error("Insufficient data for training. Need at least 50 records.")
-            return
+    # Load training data
+    print("📊 Loading training data...")
+    price_data, sentiment_data = load_training_data(ALL_SYMBOLS)
 
-        # Feature engineering
-        feature_engineer = FeatureEngineer()
-        X, y, feature_columns = feature_engineer.prepare_training_data(price_data, sentiment_data)
+    if price_data.empty:
+        print("❌ No price data available for training.")
+        print("💡 Please run data collection first.")
+        return
 
-        # Validate features
-        if not validate_features(X, y):
-            logger.error("Feature validation failed")
-            return
+    # Prepare features
+    print("🔧 Engineering features...")
+    X, y, feature_columns = prepare_features(price_data, sentiment_data)
 
-        logger.info(f"Features: {len(feature_columns)}")
-        logger.info(f"Feature names: {feature_columns}")
+    if X.empty:
+        print("❌ No features could be created from the data.")
+        return
 
-        # Train models
-        predictor = PricePredictor()
-        performance = predictor.train_models(X, y)
+    # Train models
+    print("🤖 Training machine learning models...")
+    predictor = train_and_evaluate_models(X, y)
 
-        if performance:
-            # Save models
-            predictor.save_model('models/trained_models.pkl')
+    if predictor:
+        # Analyze feature importance
+        analyze_feature_importance(predictor, feature_columns)
 
-            # Print results
-            logger.info("🎯 Training Completed!")
-            logger.info(f"Best Model: {performance.get('best_model', 'N/A')}")
-            logger.info(f"Accuracy: {performance.get('accuracy', 0):.3f}")
-            logger.info(f"CV Score: {performance.get('cv_score', 0):.3f}")
+        print("\n🎉 Training completed successfully!")
+        print(f"📈 Best Model: {predictor.best_model}")
+        print(f"🎯 Accuracy: {predictor.model_performance.get('accuracy', 0):.1%}")
+        print(f"📊 F1 Score: {predictor.model_performance.get('f1_score', 0):.1%}")
+        print(f"🏆 ROC AUC: {predictor.model_performance.get('roc_auc', 0):.1%}")
 
-            # Test prediction with latest data
-            if not X.empty:
-                latest_features = X.iloc[-1].to_dict()
-                prediction = predictor.predict_next_hour(latest_features)
-                logger.info(f"Sample Prediction: {prediction}")
-        else:
-            logger.error("Model training failed")
+        # Save predictions for dashboard
+        save_sample_predictions(predictor, price_data, feature_columns)
 
-    except Exception as e:
-        logger.error(f"Training failed: {e}")
-        import traceback
-        logger.error(traceback.format_exc())
+    else:
+        print("❌ Training failed. Check the logs for details.")
 
 
 if __name__ == "__main__":

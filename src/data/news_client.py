@@ -15,15 +15,8 @@ class NewsSentimentCollector:
         self.provider = provider
         self.base_url = "https://newsapi.org/v2" if provider == 'newsapi' else "https://gnews.io/api/v4"
 
-    def extract_symbols_from_text(self, text):
-        """Extract cryptocurrency symbols from news text"""
-        if not text:
-            return []
-
-        text_lower = text.lower()
-        mentioned_symbols = []
-
-        crypto_keywords = {
+        # Enhanced keyword mapping for both crypto and stocks
+        self.crypto_keywords = {
             'BTC': ['bitcoin', 'btc', 'satoshi'],
             'ETH': ['ethereum', 'eth', 'vitalik'],
             'ADA': ['cardano', 'ada', 'charles hoskinson'],
@@ -34,7 +27,34 @@ class NewsSentimentCollector:
             'DOGE': ['dogecoin', 'doge']
         }
 
-        for symbol, keywords in crypto_keywords.items():
+        self.stock_keywords = {
+            'AAPL': ['apple', 'aapl', 'iphone', 'ipad', 'macbook', 'tim cook'],
+            'TSLA': ['tesla', 'tsla', 'elon musk', 'model s', 'model 3', 'model x', 'model y', 'cybertruck'],
+            'MSFT': ['microsoft', 'msft', 'windows', 'azure', 'surface', 'satya nadella', 'xbox'],
+            'AMZN': ['amazon', 'amzn', 'jeff bezos', 'aws', 'prime', 'alexa'],
+            'GOOGL': ['google', 'alphabet', 'googl', 'sundar pichai', 'android', 'youtube', 'search engine'],
+            'NVDA': ['nvidia', 'nvda', 'jensen huang', 'gpu', 'rtx', 'ai chips', 'graphics card'],
+            'META': ['meta', 'facebook', 'fb', 'mark zuckerberg', 'instagram', 'whatsapp', 'oculus'],
+            'JPM': ['jpmorgan', 'jpm', 'chase', 'jamie dimon', 'bank', 'investment bank'],
+            'NFLX': ['netflix', 'nflx', 'reed hastings', 'streaming', 'movies', 'tv shows'],
+            'AMD': ['amd', 'advanced micro devices', 'lisa su', 'ryzen', 'processors', 'cpu']
+        }
+
+    def extract_symbols_from_text(self, text):
+        """Extract cryptocurrency and stock symbols from news text"""
+        if not text:
+            return []
+
+        text_lower = text.lower()
+        mentioned_symbols = []
+
+        # Check for crypto symbols
+        for symbol, keywords in self.crypto_keywords.items():
+            if any(keyword in text_lower for keyword in keywords):
+                mentioned_symbols.append(symbol)
+
+        # Check for stock symbols
+        for symbol, keywords in self.stock_keywords.items():
             if any(keyword in text_lower for keyword in keywords):
                 mentioned_symbols.append(symbol)
 
@@ -48,7 +68,7 @@ class NewsSentimentCollector:
         except:
             return 0.0
 
-    def get_news_articles(self, query='cryptocurrency', language='en', max_articles=50):
+    def get_news_articles(self, query='stocks', language='en', max_articles=50):
         """Fetch news articles from API"""
         try:
             if self.provider == 'newsapi':
@@ -61,7 +81,7 @@ class NewsSentimentCollector:
             return []
 
     def _get_newsapi_articles(self, query, language, max_articles):
-        """Fetch from NewsAPI"""
+        """Fetch from NewsAPI with enhanced stock coverage"""
         url = f"{self.base_url}/everything"
 
         params = {
@@ -101,7 +121,7 @@ class NewsSentimentCollector:
                 }
                 processed_articles.append(processed_article)
 
-            logger.info(f"Fetched {len(processed_articles)} news articles")
+            logger.info(f"Fetched {len(processed_articles)} news articles for query: {query}")
             return processed_articles
 
         else:
@@ -147,25 +167,31 @@ class NewsSentimentCollector:
                 }
                 processed_articles.append(processed_article)
 
-            logger.info(f"Fetched {len(processed_articles)} news articles from GNews")
+            logger.info(f"Fetched {len(processed_articles)} news articles from GNews for query: {query}")
             return processed_articles
 
         else:
             logger.error(f"GNews error: {response.status_code} - {response.text}")
             return []
 
-    def get_crypto_news_sentiment(self):
-        """Get comprehensive crypto news sentiment"""
+    def get_comprehensive_news_sentiment(self):
+        """Get comprehensive news sentiment for both crypto and stocks"""
         try:
             all_articles = []
 
-            # Fetch articles for different crypto-related queries
-            queries = ['cryptocurrency', 'bitcoin', 'ethereum', 'blockchain']
+            # Enhanced queries for both crypto and stocks
+            crypto_queries = ['cryptocurrency', 'bitcoin', 'ethereum', 'blockchain', 'defi', 'nft']
+            stock_queries = ['stocks', 'stock market', 'investing', 'earnings', 'trading', 'wall street']
 
-            for query in queries:
-                articles = self.get_news_articles(query=query, max_articles=20)
+            # Individual stock queries for better coverage
+            individual_stocks = ['apple', 'tesla', 'microsoft', 'amazon', 'google', 'nvidia', 'meta', 'netflix', 'amd']
+
+            all_queries = crypto_queries + stock_queries + individual_stocks
+
+            for query in all_queries:
+                articles = self.get_news_articles(query=query, max_articles=15)
                 all_articles.extend(articles)
-                time.sleep(1)  # Rate limiting
+                time.sleep(0.5)  # Rate limiting
 
             # Remove duplicates based on title
             unique_articles = {}
@@ -209,9 +235,10 @@ class NewsSentimentCollector:
                         'source': 'news'
                     })
 
-            logger.info(f"Processed sentiment for {len(sentiment_summary)} symbols from news")
+            logger.info(
+                f"Processed sentiment for {len(sentiment_summary)} symbols from news (including {len([s for s in sentiment_summary if s['symbol'] in self.stock_keywords])} stocks)")
             return sentiment_summary, unique_articles
 
         except Exception as e:
-            logger.error(f"Error processing crypto news sentiment: {e}")
+            logger.error(f"Error processing comprehensive news sentiment: {e}")
             return [], []

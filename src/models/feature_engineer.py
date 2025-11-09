@@ -3,9 +3,10 @@ import numpy as np
 from datetime import datetime, timedelta
 import logging
 from ta.momentum import RSIIndicator, StochasticOscillator, WilliamsRIndicator
-from ta.trend import MACD, ADXIndicator
-from ta.volatility import BollingerBands, AverageTrueRange
-from ta.volume import VolumeWeightedAveragePrice, OnBalanceVolumeIndicator
+from ta.trend import MACD, ADXIndicator, IchimokuIndicator
+from ta.volatility import BollingerBands, AverageTrueRange, KeltnerChannel
+from ta.volume import VolumeWeightedAveragePrice, OnBalanceVolumeIndicator, AccDistIndexIndicator
+from ta.others import DailyReturnIndicator
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -64,58 +65,77 @@ class FeatureEngineer:
                 logger.error("No data after cleaning")
                 return df
 
-            # === MOMENTUM INDICATORS ===
-            # RSI with multiple timeframes
-            df['rsi_14'] = self.safe_technical_indicator(RSIIndicator(df['close'], window=14).rsi)
-            df['rsi_21'] = self.safe_technical_indicator(RSIIndicator(df['close'], window=21).rsi)
-            df['rsi_7'] = self.safe_technical_indicator(RSIIndicator(df['close'], window=7).rsi)
+            # === ENHANCED MOMENTUM INDICATORS ===
+            # Multiple RSI timeframes
+            for window in [6, 14, 21]:
+                df[f'rsi_{window}'] = self.safe_technical_indicator(
+                    RSIIndicator(df['close'], window=window).rsi
+                )
 
-            # Stochastic Oscillator
-            stoch = StochasticOscillator(df['high'], df['low'], df['close'], window=14)
-            df['stoch_k'] = self.safe_technical_indicator(stoch.stoch)
-            df['stoch_d'] = self.safe_technical_indicator(stoch.stoch_signal)
+            # Stochastic Oscillator with different parameters
+            stoch_fast = StochasticOscillator(df['high'], df['low'], df['close'], window=14, smooth_window=3)
+            stoch_slow = StochasticOscillator(df['high'], df['low'], df['close'], window=21, smooth_window=5)
+
+            df['stoch_k_fast'] = self.safe_technical_indicator(stoch_fast.stoch)
+            df['stoch_d_fast'] = self.safe_technical_indicator(stoch_fast.stoch_signal)
+            df['stoch_k_slow'] = self.safe_technical_indicator(stoch_slow.stoch)
+            df['stoch_d_slow'] = self.safe_technical_indicator(stoch_slow.stoch_signal)
 
             # Williams %R
             williams = WilliamsRIndicator(df['high'], df['low'], df['close'])
             df['williams_r'] = self.safe_technical_indicator(williams.williams_r)
 
-            # === TREND INDICATORS ===
-            # MACD
-            macd = MACD(df['close'])
-            df['macd'] = self.safe_technical_indicator(macd.macd)
-            df['macd_signal'] = self.safe_technical_indicator(macd.macd_signal)
-            df['macd_diff'] = self.safe_technical_indicator(macd.macd_diff)
+            # === ENHANCED TREND INDICATORS ===
+            # MACD with multiple configurations
+            macd_fast = MACD(df['close'], window_slow=26, window_fast=12, window_sign=9)
+            macd_slow = MACD(df['close'], window_slow=52, window_fast=26, window_sign=9)
 
-            # ADX (Trend Strength)
-            adx = ADXIndicator(df['high'], df['low'], df['close'])
-            df['adx'] = self.safe_technical_indicator(adx.adx)
-            df['adx_pos'] = self.safe_technical_indicator(adx.adx_pos)
-            df['adx_neg'] = self.safe_technical_indicator(adx.adx_neg)
+            df['macd_fast'] = self.safe_technical_indicator(macd_fast.macd)
+            df['macd_signal_fast'] = self.safe_technical_indicator(macd_fast.macd_signal)
+            df['macd_diff_fast'] = self.safe_technical_indicator(macd_fast.macd_diff)
 
-            # === VOLATILITY INDICATORS ===
-            # Bollinger Bands
-            bb = BollingerBands(df['close'])
-            df['bb_upper'] = self.safe_technical_indicator(bb.bollinger_hband)
-            df['bb_lower'] = self.safe_technical_indicator(bb.bollinger_lband)
-            df['bb_middle'] = self.safe_technical_indicator(bb.bollinger_mavg)
+            df['macd_slow'] = self.safe_technical_indicator(macd_slow.macd)
+            df['macd_signal_slow'] = self.safe_technical_indicator(macd_slow.macd_signal)
+            df['macd_diff_slow'] = self.safe_technical_indicator(macd_slow.macd_diff)
 
-            # Calculate derived Bollinger Band features safely
-            df['bb_width'] = np.where(
-                (df['bb_middle'] > 0) & (df['bb_upper'] > df['bb_lower']),
-                (df['bb_upper'] - df['bb_lower']) / df['bb_middle'],
-                0
-            )
-            df['bb_position'] = np.where(
-                (df['bb_upper'] > df['bb_lower']),
-                (df['close'] - df['bb_lower']) / (df['bb_upper'] - df['bb_lower']),
-                0.5
-            )
+            # ADX with multiple timeframes
+            for window in [14, 21]:
+                adx = ADXIndicator(df['high'], df['low'], df['close'], window=window)
+                df[f'adx_{window}'] = self.safe_technical_indicator(adx.adx)
+                df[f'adx_pos_{window}'] = self.safe_technical_indicator(adx.adx_pos)
+                df[f'adx_neg_{window}'] = self.safe_technical_indicator(adx.adx_neg)
 
-            # Average True Range
-            atr = AverageTrueRange(df['high'], df['low'], df['close'])
-            df['atr'] = self.safe_technical_indicator(atr.average_true_range)
+            # Ichimoku Cloud
+            ichimoku = IchimokuIndicator(df['high'], df['low'])
+            df['ichimoku_a'] = self.safe_technical_indicator(ichimoku.ichimoku_a)
+            df['ichimoku_b'] = self.safe_technical_indicator(ichimoku.ichimoku_b)
+            df['ichimoku_base'] = self.safe_technical_indicator(ichimoku.ichimoku_base_line)
+            df['ichimoku_conversion'] = self.safe_technical_indicator(ichimoku.ichimoku_conversion_line)
 
-            # === VOLUME INDICATORS ===
+            # === ENHANCED VOLATILITY INDICATORS ===
+            # Bollinger Bands with multiple deviations
+            for std in [1, 2]:
+                bb = BollingerBands(df['close'], window=20, window_dev=std)
+                df[f'bb_upper_{std}'] = self.safe_technical_indicator(bb.bollinger_hband)
+                df[f'bb_lower_{std}'] = self.safe_technical_indicator(bb.bollinger_lband)
+                df[f'bb_middle_{std}'] = self.safe_technical_indicator(bb.bollinger_mavg)
+
+            # Bollinger Band width and position
+            df['bb_width'] = (df['bb_upper_2'] - df['bb_lower_2']) / df['bb_middle_2']
+            df['bb_position'] = (df['close'] - df['bb_lower_2']) / (df['bb_upper_2'] - df['bb_lower_2'])
+
+            # Keltner Channel
+            keltner = KeltnerChannel(df['high'], df['low'], df['close'])
+            df['keltner_upper'] = self.safe_technical_indicator(keltner.keltner_channel_hband)
+            df['keltner_lower'] = self.safe_technical_indicator(keltner.keltner_channel_lband)
+            df['keltner_middle'] = self.safe_technical_indicator(keltner.keltner_channel_mband)
+
+            # Average True Range with multiple timeframes
+            for window in [7, 14, 21]:
+                atr = AverageTrueRange(df['high'], df['low'], df['close'], window=window)
+                df[f'atr_{window}'] = self.safe_technical_indicator(atr.average_true_range)
+
+            # === ENHANCED VOLUME INDICATORS ===
             # Volume Weighted Average Price
             vwap = VolumeWeightedAveragePrice(df['high'], df['low'], df['close'], df['volume'])
             df['vwap'] = self.safe_technical_indicator(vwap.volume_weighted_average_price)
@@ -124,43 +144,42 @@ class FeatureEngineer:
             obv = OnBalanceVolumeIndicator(df['close'], df['volume'])
             df['obv'] = self.safe_technical_indicator(obv.on_balance_volume)
 
-            # Volume SMA ratios
-            df['volume_sma_5'] = df['volume'].rolling(5).mean()
-            df['volume_sma_20'] = df['volume'].rolling(20).mean()
-            df['volume_ratio'] = np.where(
-                df['volume_sma_20'] > 0,
-                df['volume'] / df['volume_sma_20'],
-                1
-            )
+            # Accumulation/Distribution Line
+            adi = AccDistIndexIndicator(df['high'], df['low'], df['close'], df['volume'])
+            df['adi'] = self.safe_technical_indicator(adi.acc_dist_index)
 
-            # === PRICE ACTION FEATURES ===
-            # Price changes with bounds
+            # Volume SMA ratios
+            for period in [5, 10, 20]:
+                df[f'volume_sma_{period}'] = df['volume'].rolling(period).mean()
+                df[f'volume_ratio_{period}'] = df['volume'] / df[f'volume_sma_{period}']
+
+            # === ENHANCED PRICE ACTION FEATURES ===
+            # Price changes with multiple timeframes
             for period in [1, 2, 3, 4, 6, 8, 12, 24]:
                 pct_change = df['close'].pct_change(period)
                 # Cap extreme values to ±50%
                 df[f'price_change_{period}h'] = np.clip(pct_change, -0.5, 0.5)
 
+            # Daily returns
+            daily_return = DailyReturnIndicator(df['close'])
+            df['daily_return'] = self.safe_technical_indicator(daily_return.daily_return)
+
             # Rolling price statistics
-            df['price_high_24h'] = df['high'].rolling(24).max()
-            df['price_low_24h'] = df['low'].rolling(24).min()
-            df['price_range_24h'] = np.where(
-                df['price_low_24h'] > 0,
-                (df['price_high_24h'] - df['price_low_24h']) / df['price_low_24h'],
-                0
-            )
+            for period in [6, 12, 24]:
+                df[f'price_high_{period}h'] = df['high'].rolling(period).max()
+                df[f'price_low_{period}h'] = df['low'].rolling(period).min()
+                df[f'price_range_{period}h'] = (df[f'price_high_{period}h'] - df[f'price_low_{period}h']) / df[
+                    f'price_low_{period}h']
 
             # Moving averages and ratios
-            for period in [5, 10, 20, 50]:
+            for period in [5, 10, 20, 50, 100]:
                 df[f'sma_{period}'] = df['close'].rolling(period).mean()
                 df[f'ema_{period}'] = df['close'].ewm(span=period).mean()
-                df[f'price_sma_ratio_{period}'] = np.where(
-                    df[f'sma_{period}'] > 0,
-                    df['close'] / df[f'sma_{period}'],
-                    1
-                )
+                df[f'price_sma_ratio_{period}'] = df['close'] / df[f'sma_{period}']
+                df[f'price_ema_ratio_{period}'] = df['close'] / df[f'ema_{period}']
 
-            # Price position in recent range (bounded 0-1)
-            for period in [6, 12]:
+            # Price position in recent range
+            for period in [6, 12, 24]:
                 rolling_min = df['low'].rolling(period).min()
                 rolling_max = df['high'].rolling(period).max()
                 price_position = np.where(
@@ -170,36 +189,46 @@ class FeatureEngineer:
                 )
                 df[f'price_position_{period}h'] = np.clip(price_position, 0, 1)
 
-            # === VOLATILITY FEATURES ===
-            volatility_6h = df['price_change_1h'].rolling(6).std()
-            volatility_12h = df['price_change_1h'].rolling(12).std()
-            volatility_24h = df['price_change_1h'].rolling(24).std()
-
-            # Cap volatility to reasonable values
-            df['volatility_6h'] = np.clip(volatility_6h, 0, 0.2)
-            df['volatility_12h'] = np.clip(volatility_12h, 0, 0.2)
-            df['volatility_24h'] = np.clip(volatility_24h, 0, 0.2)
+            # === ENHANCED VOLATILITY FEATURES ===
+            for period in [6, 12, 24]:
+                volatility = df['price_change_1h'].rolling(period).std()
+                df[f'volatility_{period}h'] = np.clip(volatility, 0, 0.2)
 
             # === MOMENTUM COMBINATIONS ===
-            df['rsi_stoch_combo'] = np.clip((df['rsi_14'] / 100) * (df['stoch_k'] / 100), 0, 1)
-            df['macd_momentum'] = np.clip(df['macd'] - df['macd_signal'], -10, 10)
+            df['rsi_stoch_combo'] = (df['rsi_14'] / 100) * (df['stoch_k_fast'] / 100)
+            df['macd_momentum'] = df['macd_diff_fast'] - df['macd_diff_slow']
+            df['trend_strength'] = np.clip(df['adx_14'] / 100, 0, 1)
 
-            # === TREND STRENGTH ===
-            df['trend_strength'] = np.clip(df['adx'] / 100, 0, 1)
+            # === PRICE PATTERNS ===
+            # Support and resistance levels
+            df['resistance_distance'] = (df['bb_upper_2'] - df['close']) / df['close']
+            df['support_distance'] = (df['close'] - df['bb_lower_2']) / df['close']
 
-            # Target variable: Next hour price movement (1 = up, 0 = down)
-            df['target'] = (df['close'].shift(-1) > df['close']).astype(int)
+            # Price momentum
+            df['price_momentum_5'] = df['close'] / df['close'].shift(5) - 1
+            df['price_momentum_10'] = df['close'] / df['close'].shift(10) - 1
+
+            # === ADVANCED TARGET VARIABLE ===
+            # Multi-class target: Strong Up, Weak Up, Neutral, Weak Down, Strong Down
+            future_return = df['close'].shift(-1) / df['close'] - 1
+            conditions = [
+                future_return > 0.02,  # Strong Up: >2%
+                (future_return > 0.005) & (future_return <= 0.02),  # Weak Up: 0.5%-2%
+                (future_return >= -0.005) & (future_return <= 0.005),  # Neutral: -0.5% to 0.5%
+                (future_return >= -0.02) & (future_return < -0.005),  # Weak Down: -2% to -0.5%
+                future_return < -0.02  # Strong Down: < -2%
+            ]
+            choices = [2, 1, 0, -1, -2]  # 5-class target
+            df['target_multi'] = np.select(conditions, choices, default=0)
+
+            # Binary target for backward compatibility
+            df['target'] = (future_return > 0).astype(int)
 
             # Final data cleaning
             df = self.clean_data(df)
 
-            # Drop columns that might still have issues
-            df = df.replace([np.inf, -np.inf], np.nan)
-            df = df.fillna(method='ffill').fillna(method='bfill')
-            df = df.dropna()
-
             # Define feature columns (exclude non-numeric and target columns)
-            exclude_cols = ['timestamp', 'close_time', 'ignore', 'target', 'symbol']
+            exclude_cols = ['timestamp', 'close_time', 'ignore', 'target', 'target_multi', 'symbol']
             self.feature_columns = [col for col in df.columns if
                                     col not in exclude_cols and pd.api.types.is_numeric_dtype(df[col])]
 
@@ -213,14 +242,14 @@ class FeatureEngineer:
             return df
 
     def create_sentiment_features(self, price_df, sentiment_df):
-        """Enhanced sentiment feature engineering"""
+        """Enhanced sentiment feature engineering with timezone fix"""
         try:
             if sentiment_df.empty:
                 return price_df
 
-            # Ensure timestamp is datetime
-            sentiment_df['timestamp'] = pd.to_datetime(sentiment_df['timestamp'])
-            price_df['timestamp'] = pd.to_datetime(price_df['timestamp'])
+            # Ensure timestamp is datetime with UTC timezone
+            sentiment_df['timestamp'] = pd.to_datetime(sentiment_df['timestamp'], utc=True)
+            price_df['timestamp'] = pd.to_datetime(price_df['timestamp'], utc=True)
 
             # Create a copy to avoid modifying original
             merged_df = price_df.copy()
@@ -298,6 +327,8 @@ class FeatureEngineer:
 
         except Exception as e:
             logger.error(f"Error creating sentiment features: {e}")
+            import traceback
+            logger.error(traceback.format_exc())
             return price_df
 
     def prepare_training_data(self, price_data, sentiment_data):
