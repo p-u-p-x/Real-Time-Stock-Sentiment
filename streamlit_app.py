@@ -169,7 +169,7 @@ st.markdown("""
         background-clip: text;
         border-bottom: 3px solid var(--vibrant-cyan);
         padding-bottom: 0.5rem;
-        margin: 2rem 0 2rem 0;
+        margin: 2rem 0 1rem 0;
         font-weight: 700;
     }
 
@@ -178,7 +178,7 @@ st.markdown("""
         color: var(--vibrant-purple);
         border-left: 4px solid var(--vibrant-purple);
         padding-left: 1rem;
-        margin: 2rem 0 1rem 0;
+        margin: 1.5rem 0 1rem 0;
         font-weight: 600;
     }
 
@@ -295,28 +295,18 @@ st.markdown("""
 
     /* Ensure proper spacing between sections */
     .element-container {
-        margin-bottom: 2rem;
+        margin-bottom: 1.5rem;
     }
 
     /* Fix chart container spacing */
     .stPlotlyChart {
-        margin-top: 2rem !important;
-        margin-bottom: 2rem !important;
+        margin-top: 1rem;
+        margin-bottom: 1rem;
     }
 
     /* Specific fix for sentiment gauge spacing */
     [data-testid="stVerticalBlock"] > [style*="flex-direction: column;"] > [data-testid="stVerticalBlock"] {
-        gap: 1rem !important;
-    }
-
-    /* Additional spacing for section headers */
-    .stMarkdown h2 {
-        margin-bottom: 2rem !important;
-    }
-
-    /* Force spacing after headings */
-    [data-testid="stMarkdownContainer"] {
-        margin-bottom: 2rem !important;
+        gap: 0.5rem;
     }
 </style>
 """, unsafe_allow_html=True)
@@ -1126,8 +1116,8 @@ def main():
         # Sentiment Analysis Section
         st.markdown('<h2 class="section-header">📊 Market Sentiment</h2>', unsafe_allow_html=True)
 
-        # Add generous spacing between heading and chart
-        st.markdown('<div style="margin-bottom: 3rem;"></div>', unsafe_allow_html=True)
+        # Add spacing between heading and chart
+        st.markdown('<div style="margin-bottom: 1.5rem;"></div>', unsafe_allow_html=True)
 
         # Get symbol name for sentiment lookup
         symbol_for_sentiment = get_symbol_for_sentiment(selected_symbol, asset_type_selected)
@@ -1148,7 +1138,7 @@ def main():
 
                 # Display sentiment details
                 st.markdown(f"""
-                <div style="background: rgba(59, 130, 246, 0.1); padding: 1rem; border-radius: 8px; margin-top: 2rem;">
+                <div style="background: rgba(59, 130, 246, 0.1); padding: 1rem; border-radius: 8px; margin-top: 1rem;">
                     <p style="color: #94a3b8; margin: 0.3rem 0; font-size: 0.9rem;">
                         <strong>Sentiment Score:</strong> {sentiment_value:.3f}
                     </p>
@@ -1198,8 +1188,8 @@ def main():
         # AI Predictions Section
         st.markdown('<h2 class="section-header">🤖 AI Predictions</h2>', unsafe_allow_html=True)
 
-        # Add generous spacing between heading and content
-        st.markdown('<div style="margin-bottom: 3rem;"></div>', unsafe_allow_html=True)
+        # Add spacing between heading and content
+        st.markdown('<div style="margin-bottom: 1.5rem;"></div>', unsafe_allow_html=True)
 
         # Use the live prediction
         pred_class = "prediction-up" if prediction['prediction'] == 'UP' else "prediction-down"
