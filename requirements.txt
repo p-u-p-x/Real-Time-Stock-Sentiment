@@ -18,3 +18,4 @@ plotly>=5.15.0
 # Utilities
 python-dotenv>=1.0.0
 tqdm>=4.65.0
+schedule>=1.2.0
