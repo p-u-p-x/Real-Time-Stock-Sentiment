@@ -286,23 +286,6 @@ st.markdown("""
         border: 1px solid var(--danger) !important;
         color: var(--text-primary) !important;
     }
-
-    /* Fix for overlapping headings */
-    .main .block-container {
-        padding-top: 2rem;
-        padding-bottom: 2rem;
-    }
-
-    /* Ensure proper spacing between sections */
-    .element-container {
-        margin-bottom: 1.5rem;
-    }
-
-    /* Fix chart container spacing */
-    .stPlotlyChart {
-        margin-top: 1rem;
-        margin-bottom: 1rem;
-    }
 </style>
 """, unsafe_allow_html=True)
 
@@ -1093,7 +1076,7 @@ def main():
             </div>
             """, unsafe_allow_html=True)
 
-        # Chart Section with proper spacing
+        # Chart Section
         st.markdown('<h2 class="section-header">📈 Advanced Charting</h2>', unsafe_allow_html=True)
 
         fig = create_advanced_price_chart(price_data, selected_symbol, asset_type_selected, chart_type)
@@ -1104,13 +1087,13 @@ def main():
         st.warning(f"🔄 Fetching live data for {selected_symbol}...")
         st.info("💡 Please wait while we load real-time market data")
 
-    # Two Column Layout for Sentiment and Predictions with proper spacing
-    st.markdown('<h2 class="section-header">📊 Market Sentiment</h2>', unsafe_allow_html=True)
-
+    # Two Column Layout for Sentiment and Predictions
     col_left, col_right = st.columns([1, 1])
 
     with col_left:
         # Sentiment Analysis Section
+        st.markdown('<h2 class="section-header">📊 Market Sentiment</h2>', unsafe_allow_html=True)
+
         # Get symbol name for sentiment lookup
         symbol_for_sentiment = get_symbol_for_sentiment(selected_symbol, asset_type_selected)
 
@@ -1263,7 +1246,7 @@ def main():
     else:
         st.info("📰 Loading financial news...")
 
-    # Quick Actions Section with proper spacing
+    # Quick Actions Section
     st.markdown('<h2 class="section-header">⚡ Quick Actions</h2>', unsafe_allow_html=True)
 
     col1, col2, col3, col4 = st.columns(4)
