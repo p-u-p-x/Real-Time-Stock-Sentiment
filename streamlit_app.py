@@ -169,7 +169,7 @@ st.markdown("""
         background-clip: text;
         border-bottom: 3px solid var(--vibrant-cyan);
         padding-bottom: 0.5rem;
-        margin: 2rem 0 1rem 0;
+        margin: 2rem 0 2rem 0;
         font-weight: 700;
     }
 
@@ -178,7 +178,7 @@ st.markdown("""
         color: var(--vibrant-purple);
         border-left: 4px solid var(--vibrant-purple);
         padding-left: 1rem;
-        margin: 1.5rem 0 1rem 0;
+        margin: 2rem 0 1rem 0;
         font-weight: 600;
     }
 
@@ -295,18 +295,28 @@ st.markdown("""
 
     /* Ensure proper spacing between sections */
     .element-container {
-        margin-bottom: 1.5rem;
+        margin-bottom: 2rem;
     }
 
     /* Fix chart container spacing */
     .stPlotlyChart {
-        margin-top: 1rem;
-        margin-bottom: 1rem;
+        margin-top: 2rem !important;
+        margin-bottom: 2rem !important;
     }
 
     /* Specific fix for sentiment gauge spacing */
     [data-testid="stVerticalBlock"] > [style*="flex-direction: column;"] > [data-testid="stVerticalBlock"] {
-        gap: 0.5rem;
+        gap: 1rem !important;
+    }
+
+    /* Additional spacing for section headers */
+    .stMarkdown h2 {
+        margin-bottom: 2rem !important;
+    }
+
+    /* Force spacing after headings */
+    [data-testid="stMarkdownContainer"] {
+        margin-bottom: 2rem !important;
     }
 </style>
 """, unsafe_allow_html=True)
@@ -911,10 +921,92 @@ def load_ml_model():
         return None
 
 
+def show_market_overview():
+    """Display market overview with multiple assets"""
+    st.markdown('<h2 class="section-header">🌐 Market Overview</h2>', unsafe_allow_html=True)
+
+    # Create a grid of market metrics for top assets
+    top_assets = ['BTCUSDT', 'ETHUSDT', 'AAPL', 'TSLA', 'MSFT', 'GOOGL']
+
+    # Display metrics in a grid
+    cols = st.columns(3)
+    for i, symbol in enumerate(top_assets):
+        with cols[i % 3]:
+            try:
+                if symbol in CRYPTO_SYMBOLS:
+                    ticker = yf.Ticker(symbol.replace('USDT', '-USD'))
+                else:
+                    ticker = yf.Ticker(symbol)
+
+                info = ticker.info
+                current_price = info.get('currentPrice', info.get('regularMarketPrice', 0))
+                previous_close = info.get('previousClose', current_price)
+                price_change = current_price - previous_close
+                price_change_pct = (price_change / previous_close) * 100 if previous_close else 0
+
+                display_name = ASSET_DISPLAY_NAMES.get(symbol, symbol)
+
+                st.markdown(f"""
+                <div class="metric-card">
+                    <p style="color: #94a3b8; margin: 0 0 0.5rem 0; font-size: 0.9rem;">{display_name}</p>
+                    <p style="color: #10b981; font-size: 1.5rem; font-weight: bold; margin: 0;">${current_price:,.2f}</p>
+                    <p style="color: {'#10b981' if price_change_pct >= 0 else '#ef4444'}; margin: 0.5rem 0 0 0; font-size: 1rem;">
+                        {price_change_pct:+.2f}% {'📈' if price_change_pct >= 0 else '📉'}
+                    </p>
+                </div>
+                """, unsafe_allow_html=True)
+            except Exception as e:
+                st.markdown(f"""
+                <div class="metric-card">
+                    <p style="color: #94a3b8; margin: 0 0 0.5rem 0; font-size: 0.9rem;">{symbol}</p>
+                    <p style="color: #ef4444; font-size: 1.5rem; font-weight: bold; margin: 0;">N/A</p>
+                    <p style="color: #94a3b8; margin: 0.5rem 0 0 0; font-size: 1rem;">Data unavailable</p>
+                </div>
+                """, unsafe_allow_html=True)
+
+    # Market summary
+    st.markdown("---")
+    st.markdown('<h3 class="subsection-header">📊 Market Summary</h3>', unsafe_allow_html=True)
+
+    col1, col2, col3 = st.columns(3)
+
+    with col1:
+        st.markdown("""
+        <div style="background: rgba(16, 185, 129, 0.1); padding: 1.5rem; border-radius: 12px; border-left: 4px solid #10b981;">
+            <h4 style="color: #10b981; margin: 0 0 1rem 0;">🔄 Live Markets</h4>
+            <p style="color: #94a3b8; margin: 0.5rem 0;">Real-time data streaming</p>
+            <p style="color: #94a3b8; margin: 0.5rem 0;">Multiple asset classes</p>
+            <p style="color: #94a3b8; margin: 0.5rem 0;">Instant price updates</p>
+        </div>
+        """, unsafe_allow_html=True)
+
+    with col2:
+        st.markdown("""
+        <div style="background: rgba(59, 130, 246, 0.1); padding: 1.5rem; border-radius: 12px; border-left: 4px solid #3b82f6;">
+            <h4 style="color: #3b82f6; margin: 0 0 1rem 0;">📈 Advanced Analytics</h4>
+            <p style="color: #94a3b8; margin: 0.5rem 0;">Technical indicators</p>
+            <p style="color: #94a3b8; margin: 0.5rem 0;">Sentiment analysis</p>
+            <p style="color: #94a3b8; margin: 0.5rem 0;">AI predictions</p>
+        </div>
+        """, unsafe_allow_html=True)
+
+    with col3:
+        st.markdown("""
+        <div style="background: rgba(139, 92, 246, 0.1); padding: 1.5rem; border-radius: 12px; border-left: 4px solid #8b5cf6;">
+            <h4 style="color: #8b5cf6; margin: 0 0 1rem 0;">⚡ Quick Actions</h4>
+            <p style="color: #94a3b8; margin: 0.5rem 0;">One-click analysis</p>
+            <p style="color: #94a3b8; margin: 0.5rem 0;">Instant updates</p>
+            <p style="color: #94a3b8; margin: 0.5rem 0;">Multi-asset view</p>
+        </div>
+        """, unsafe_allow_html=True)
+
+
 def main():
     # Initialize session state
     if 'last_refresh' not in st.session_state:
         st.session_state.last_refresh = datetime.now()
+    if 'show_market_overview' not in st.session_state:
+        st.session_state.show_market_overview = False
 
     # Header Section
     col1, col2, col3 = st.columns([1, 2, 1])
@@ -1032,6 +1124,15 @@ def main():
 
     # ===== MAIN DASHBOARD =====
 
+    # Check if we should show market overview
+    if st.session_state.show_market_overview:
+        show_market_overview()
+        # Add a button to go back to normal view
+        if st.button("← Back to Asset View", use_container_width=True):
+            st.session_state.show_market_overview = False
+            st.rerun()
+        return
+
     # Load LIVE data
     with st.spinner('🔄 Loading live market data...'):
         price_data = load_price_data(selected_symbol, time_range)
@@ -1116,8 +1217,8 @@ def main():
         # Sentiment Analysis Section
         st.markdown('<h2 class="section-header">📊 Market Sentiment</h2>', unsafe_allow_html=True)
 
-        # Add spacing between heading and chart
-        st.markdown('<div style="margin-bottom: 1.5rem;"></div>', unsafe_allow_html=True)
+        # Add generous spacing between heading and chart
+        st.markdown('<div style="margin-bottom: 3rem;"></div>', unsafe_allow_html=True)
 
         # Get symbol name for sentiment lookup
         symbol_for_sentiment = get_symbol_for_sentiment(selected_symbol, asset_type_selected)
@@ -1138,7 +1239,7 @@ def main():
 
                 # Display sentiment details
                 st.markdown(f"""
-                <div style="background: rgba(59, 130, 246, 0.1); padding: 1rem; border-radius: 8px; margin-top: 1rem;">
+                <div style="background: rgba(59, 130, 246, 0.1); padding: 1rem; border-radius: 8px; margin-top: 2rem;">
                     <p style="color: #94a3b8; margin: 0.3rem 0; font-size: 0.9rem;">
                         <strong>Sentiment Score:</strong> {sentiment_value:.3f}
                     </p>
@@ -1188,8 +1289,8 @@ def main():
         # AI Predictions Section
         st.markdown('<h2 class="section-header">🤖 AI Predictions</h2>', unsafe_allow_html=True)
 
-        # Add spacing between heading and content
-        st.markdown('<div style="margin-bottom: 1.5rem;"></div>', unsafe_allow_html=True)
+        # Add generous spacing between heading and content
+        st.markdown('<div style="margin-bottom: 3rem;"></div>', unsafe_allow_html=True)
 
         # Use the live prediction
         pred_class = "prediction-up" if prediction['prediction'] == 'UP' else "prediction-down"
@@ -1290,7 +1391,8 @@ def main():
 
     with col3:
         if st.button("📊 Market Overview", use_container_width=True):
-            st.info("🌐 Market overview feature coming soon!")
+            st.session_state.show_market_overview = True
+            st.rerun()
 
     with col4:
         if st.button("🔄 Full Refresh", use_container_width=True):
